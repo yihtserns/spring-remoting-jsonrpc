@@ -18,6 +18,8 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.http.MediaType;
 import org.springframework.web.HttpRequestHandler;
@@ -29,6 +31,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -69,16 +72,37 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
             if (method == null) {
                 response.setError(JsonRpcResponse.Error.methodNotFound());
             } else {
-                Object result = method.invoke(service, request.getParams().toArray());
-                response.setResult(result);
+                if (request.getParams() instanceof List) {
+                    // TODO: When empty array
+                    response.setResult(method.invoke(service, ((List<?>) request.getParams()).toArray()));
+                } else if (request.getParams() instanceof Map) {
+                    // TODO: When empty object
+                    try {
+                        Map<String, Object> propertyName2Value = (Map) request.getParams();
+
+                        Object beanArg = method.getParameters()[0].getType().newInstance();
+                        BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(beanArg);
+
+                        // TODO: When property not found
+                        // TODO: When property count does not match bean property count
+                        propertyName2Value.forEach(bean::setPropertyValue);
+
+                        response.setResult(method.invoke(service, beanArg));
+                    } catch (IllegalAccessException | InstantiationException e) {
+                        throw new IllegalArgumentException("TODO: Return error");
+                    }
+                } else {
+                    throw new IllegalArgumentException("TODO: Return error");
+                }
             }
         } catch (IllegalArgumentException ex) {
+            log.debug("Error when trying to call method: {}", request.getMethod(), ex);
             response.setError(JsonRpcResponse.Error.invalidParams());
         } catch (InvocationTargetException ex) {
             // TODO:
             throw new IllegalArgumentException(ex);
         } catch (IllegalAccessException | RuntimeException ex) {
-            log.error("Failed to call method: " + request.getMethod(), ex);
+            log.error("Failed to call method: {}", request.getMethod(), ex);
             response.setError(JsonRpcResponse.Error.internalError());
         }
 

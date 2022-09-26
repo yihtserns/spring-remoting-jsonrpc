@@ -18,8 +18,6 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 public class JsonRpcRequest {
@@ -27,5 +25,5 @@ public class JsonRpcRequest {
     private String jsonrpc;
     private String id;
     private String method;
-    private List<Object> params;
+    private Object params;
 }

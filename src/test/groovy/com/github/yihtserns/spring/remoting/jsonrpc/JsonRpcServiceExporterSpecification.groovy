@@ -25,18 +25,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "can call using params of int array"() {
         when:
-        String id = UUID.randomUUID().toString()
-        def response = restTemplate.postForObject(
-                "http://localhost:${port}/calc",
-                new HttpEntity(
-                        [
-                                jsonrpc: "2.0",
-                                id     : id,
-                                method : "subtract",
-                                params : [10, 3]
-                        ],
-                        new HttpHeaders(contentType: MediaType.APPLICATION_JSON)),
-                Map)
+        String id = UUID.randomUUID()
+        def response = callCalc(new Request(
+                id: id,
+                method: "subtractArray",
+                params: [10, 3]))
 
         then:
         response.id == id
@@ -46,18 +39,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail when params array size is not the same as the method parameters count"() {
         when:
-        String id = UUID.randomUUID().toString()
-        def response = restTemplate.postForObject(
-                "http://localhost:${port}/calc",
-                new HttpEntity(
-                        [
-                                jsonrpc: "2.0",
-                                id     : id,
-                                method : "subtract",
-                                params : params
-                        ],
-                        new HttpHeaders(contentType: MediaType.APPLICATION_JSON)),
-                Map)
+        String id = UUID.randomUUID()
+        def response = callCalc(new Request(id: id, method: "subtractArray", params: params))
 
         then:
         response.id == id
@@ -71,6 +54,27 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 [10],
                 []
         ]
+    }
+
+    def "can call using params of object"() {
+        when:
+        String id = UUID.randomUUID()
+        def response = callCalc(new Request(
+                id: id,
+                method: "subtractObject",
+                params: [firstValue: 10, secondValue: 3]))
+
+        then:
+        response.id == id
+        response.error == null
+        response.result == 10 - 3
+    }
+
+    private Map callCalc(Request request) {
+        return restTemplate.postForObject(
+                "http://localhost:${port}/calc",
+                new HttpEntity(request, new HttpHeaders(contentType: MediaType.APPLICATION_JSON)),
+                Map)
     }
 
     @Configuration
@@ -92,14 +96,35 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     interface CalcService {
 
-        int subtract(int x, int y)
+        int subtractArray(int firstValue, int secondValue)
+
+        int subtractObject(SubtractObject bean);
     }
 
     static class CalcServiceImpl implements CalcService {
 
         @Override
-        int subtract(int x, int y) {
-            return x - y;
+        int subtractArray(int firstValue, int secondValue) {
+            return firstValue - secondValue;
         }
+
+        @Override
+        int subtractObject(SubtractObject bean) {
+            return bean.firstValue - bean.secondValue
+        }
+    }
+
+    static class SubtractObject {
+
+        int firstValue
+        int secondValue
+    }
+
+    static class Request {
+
+        final String jsonrpc = "2.0"
+        String id
+        String method
+        Object params
     }
 }
