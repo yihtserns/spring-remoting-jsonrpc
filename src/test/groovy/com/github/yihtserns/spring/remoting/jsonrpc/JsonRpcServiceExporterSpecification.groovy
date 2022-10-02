@@ -81,60 +81,52 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         then:
         response.error == null
-        response.result == paramValue
+        response.result == expectedReturnValue
 
         where:
-        method                      | paramValue
-        "returnStringArg"           | "Expected Param Value"
-        "returnStringListArg"       | ["Expected Param Value"]
-        "returnStringCollectionArg" | ["Expected Param Value"]
+        method                          | paramValue                | expectedReturnValue
+        "returnStringArg"               | "Expected Param Value"    | paramValue
+        "returnStringArrayArg"          | ["Expected Param Value"]  | paramValue
+        "returnStringListArg"           | ["Expected Param Value"]  | paramValue
+        "returnStringSetArg"            | ["Expected Param Value"]  | paramValue
+        "returnStringCollectionArg"     | ["Expected Param Value"]  | paramValue
 
-        "returnDoubleArg"           | 1.234
-        "returnDoubleWrapperArg"    | 1.234
-        "returnDoubleListArg"       | [1.234]
-        "returnDoubleCollectionArg" | [1.234]
-    }
+        "returnDoubleArg"               | 1.234                     | paramValue
+        "returnDoubleWrapperArg"        | 1.234                     | paramValue
+        "returnDoubleArrayArg"          | [1.234]                   | paramValue
+        "returnDoubleWrapperArrayArg"   | [1.234]                   | paramValue
+        "returnDoubleListArg"           | [1.234]                   | paramValue
+        "returnDoubleSetArg"            | [1.234]                   | paramValue
+        "returnDoubleCollectionArg"     | [1.234]                   | paramValue
 
-    def "unsupported array params data types"() {
-        when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: method,
-                params: [paramValue]))
+        // String-to-X auto-conversion
+        "returnDoubleArg"               | "1.234"                   | 1.234
+        "returnDoubleWrapperArg"        | "1.234"                   | 1.234
+        "returnDoubleArrayArg"          | ["1.234"]                 | [1.234]
+        "returnDoubleWrapperArrayArg"   | ["1.234"]                 | [1.234]
+        "returnDoubleListArg"           | ["1.234"]                 | [1.234]
+        "returnDoubleSetArg"            | ["1.234"]                 | [1.234]
+        "returnDoubleCollectionArg"     | ["1.234"]                 | [1.234]
 
-        then:
-        response.result == null
-        response.error.code == -32602
-        response.error.message == "Invalid params"
+        "returnFloatArg"                | 1.234                     | paramValue
+        "returnFloatWrapperArg"         | 1.234                     | paramValue
+        "returnFloatArrayArg"           | [1.234]                   | paramValue
+        "returnFloatWrapperArrayArg"    | [1.234]                   | paramValue
+        "returnFloatListArg"            | [1.234]                   | paramValue
+        "returnFloatSetArg"             | [1.234]                   | paramValue
+        "returnFloatCollectionArg"      | [1.234]                   | paramValue
 
-        where:
-        method                        | paramValue
-        "returnStringArrayArg"        | ["Expected Param Value"]
-        "returnStringSetArg"          | ["Expected Param Value"]
+        "returnBigDecimalArg"           | 1.234                     | paramValue
+        "returnBigDecimalArrayArg"      | [1.234]                   | paramValue
+        "returnBigDecimalListArg"       | [1.234]                   | paramValue
+        "returnBigDecimalSetArg"        | [1.234]                   | paramValue
+        "returnBigDecimalCollectionArg" | [1.234]                   | paramValue
 
-        "returnDoubleArrayArg"        | [1.234]
-        "returnDoubleWrapperArrayArg" | [1.234]
-        "returnDoubleSetArg"          | [1.234]
-
-        "returnFloatArg"              | 1.234
-        "returnFloatWrapperArg"       | 1.234
-        "returnFloatArrayArg"         | [1.234]
-        "returnFloatWrapperArrayArg"  | [1.234]
-// TODO:        "returnFloatListArg"            | [1.234]
-        "returnFloatSetArg"           | [1.234]
-// TODO:        "returnFloatCollectionArg"      | [1.234]
-
-        "returnBigDecimalArg"         | 1.234
-        "returnBigDecimalArrayArg"    | [1.234]
-// TODO:        "returnBigDecimalListArg"       | [1.234]
-        "returnBigDecimalSetArg"      | [1.234]
-// TODO:        "returnBigDecimalCollectionArg" | [1.234]
-
-        "returnEnumArg"               | TimeUnit.MINUTES.name()
-        "returnEnumArrayArg"          | [TimeUnit.MINUTES.name()]
-// TODO:        "returnEnumListArg"             | [TimeUnit.MINUTES.name()]
-        "returnEnumSetArg"            | [TimeUnit.MINUTES.name()]
-// TODO:        "returnEnumCollectionArg"       | [TimeUnit.MINUTES.name()]
+        "returnEnumArg"                 | TimeUnit.MINUTES.name()   | paramValue
+        "returnEnumArrayArg"            | [TimeUnit.MINUTES.name()] | paramValue
+        "returnEnumListArg"             | [TimeUnit.MINUTES.name()] | paramValue
+        "returnEnumSetArg"              | [TimeUnit.MINUTES.name()] | paramValue
+        "returnEnumCollectionArg"       | [TimeUnit.MINUTES.name()] | paramValue
     }
 
     def "supported object params data types"() {
@@ -193,18 +185,9 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnDoubleWrapperArg"      | "abc"
         "returnDoubleArrayArg"        | ["abc"]
         "returnDoubleWrapperArrayArg" | ["abc"]
-// TODO:        "returnDoubleListArg"         | ["abc"]
+        "returnDoubleListArg"         | ["abc"]
         "returnDoubleSetArg"          | ["abc"]
-// TODO:        "returnDoubleCollectionArg"   | ["abc"]
-
-// TODO:        "returnDoubleArg"             | "1.234"
-// TODO:        "returnDoubleWrapperArg"      | "1.234"
-// TODO:        "returnDoubleArrayArg"        | ["1.234"]
-// TODO:        "returnDoubleArrayArg"        | ["1.234"]
-// TODO:        "returnDoubleWrapperArrayArg" | ["1.234"]
-// TODO:        "returnDoubleListArg"         | ["1.234"]
-// TODO:        "returnDoubleSetArg"          | ["1.234"]
-// TODO:        "returnDoubleCollectionArg"   | ["1.234"]
+        "returnDoubleCollectionArg"   | ["abc"]
     }
 
     def "should fail with internal error when method throws exception"() {

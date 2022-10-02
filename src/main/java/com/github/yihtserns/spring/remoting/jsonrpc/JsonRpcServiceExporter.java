@@ -22,7 +22,10 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.ConversionNotSupportedException;
 import org.springframework.beans.NullValueInNestedPathException;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.beans.SimpleTypeConverter;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.web.HttpRequestHandler;
 
@@ -32,6 +35,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,8 +81,37 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                 response.setError(JsonRpcResponse.Error.methodNotFound());
             } else {
                 if (request.getParams() instanceof List) {
-                    // TODO: When empty array
-                    response.setResult(method.invoke(service, ((List<?>) request.getParams()).toArray()));
+                    List<Object> requestParameters = (List) request.getParams();
+                    Parameter[] methodParameters = method.getParameters();
+
+                    if (requestParameters.size() != methodParameters.length) {
+                        // TODO: Better error message & error response
+                        log.error("Expecting array params of length {} but was {}", methodParameters.length, requestParameters.size());
+                        response.setError(JsonRpcResponse.Error.invalidParams());
+                    } else {
+                        SimpleTypeConverter typeConverter = new SimpleTypeConverter();
+
+                        try {
+                            List<Object> params = new ArrayList<>();
+                            for (int i = 0; i < methodParameters.length; i++) {
+                                Parameter methodParameter = methodParameters[i];
+                                Object rawMethodArgument = requestParameters.get(i);
+
+                                Object methodArgument = typeConverter.convertIfNecessary(
+                                        rawMethodArgument,
+                                        methodParameter.getType(),
+                                        MethodParameter.forParameter(methodParameter));
+
+                                params.add(methodArgument);
+                            }
+
+                            response.setResult(method.invoke(service, params.toArray()));
+                        } catch (TypeMismatchException ex) {
+                            // TODO: Better error message & error response
+                            log.error("Failed to convert params entry type to method argument type", ex);
+                            response.setError(JsonRpcResponse.Error.invalidParams());
+                        }
+                    }
                 } else if (request.getParams() instanceof Map) {
                     // TODO: When empty object
                     try {
