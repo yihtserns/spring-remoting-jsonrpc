@@ -11,12 +11,10 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import spock.lang.Specification
-import spock.lang.Unroll
 
 import java.util.concurrent.TimeUnit
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Unroll
 class JsonRpcServiceExporterSpecification extends Specification {
 
     @LocalServerPort
