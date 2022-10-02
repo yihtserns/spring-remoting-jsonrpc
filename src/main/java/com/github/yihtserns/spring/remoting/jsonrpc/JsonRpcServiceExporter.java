@@ -69,8 +69,9 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         JsonRpcResponse response = new JsonRpcResponse();
         response.setId(request.getId());
 
+        Method method = name2Method.get(request.getMethod());
+
         try {
-            Method method = name2Method.get(request.getMethod());
             if (method == null) {
                 response.setError(JsonRpcResponse.Error.methodNotFound());
             } else {
@@ -103,8 +104,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
             log.debug("Error when trying to call method: {}", request.getMethod(), ex);
             response.setError(JsonRpcResponse.Error.invalidParams());
         } catch (InvocationTargetException ex) {
-            // TODO:
-            throw new IllegalArgumentException(ex);
+            log.error("Error thrown by method: {}", method, ex.getCause());
+            response.setError(JsonRpcResponse.Error.internalError());
         } catch (IllegalAccessException | RuntimeException ex) {
             log.error("Failed to call method: {}", request.getMethod(), ex);
             response.setError(JsonRpcResponse.Error.internalError());

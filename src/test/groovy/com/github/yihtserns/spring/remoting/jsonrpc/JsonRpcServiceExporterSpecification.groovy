@@ -207,6 +207,25 @@ class JsonRpcServiceExporterSpecification extends Specification {
 // TODO:        "returnDoubleCollectionArg"   | ["1.234"]
     }
 
+    def "should fail with internal error when method throws exception"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: method,
+                params: []))
+
+        then:
+        response.result == null
+        response.error.code == -32603
+        response.error.message == "Internal error"
+
+        where:
+        method << [
+                "throwException",
+                "throwError"
+        ]
+    }
+
     def "does not support overloaded method"() {
         when:
         def exporter = new JsonRpcServiceExporter(
@@ -308,6 +327,10 @@ class JsonRpcServiceExporterSpecification extends Specification {
         Collection<TimeUnit> returnEnumCollectionArg(Collection<TimeUnit> value)
 
         DataTypeObject returnObjectArg(DataTypeObject value)
+
+        void throwException()
+
+        void throwError()
     }
 
     static class CalcServiceImpl implements CalcService {
@@ -485,6 +508,16 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Override
         DataTypeObject returnObjectArg(DataTypeObject value) {
             return value
+        }
+
+        @Override
+        void throwException() {
+            throw new RuntimeException("Simulated Exception!")
+        }
+
+        @Override
+        void throwError() {
+            throw new Error("Simulated Error!")
         }
     }
 
