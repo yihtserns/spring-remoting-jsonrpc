@@ -13,6 +13,8 @@ import org.springframework.http.MediaType
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.TimeUnit
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Unroll
 class JsonRpcServiceExporterSpecification extends Specification {
@@ -70,6 +72,43 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result == 10 - 3
     }
 
+    def "supported data types"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID() as String,
+                method: method,
+                params: [paramValue]))
+
+        then:
+        response.error == null
+        response.result == paramValue
+
+        where:
+        method            | paramValue
+        "returnStringArg" | "Expected Param Value"
+        "returnDoubleArg" | 1.234d
+    }
+
+    def "unsupported data types"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID() as String,
+                method: method,
+                params: [paramValue]))
+
+        then:
+        response.result == null
+        response.error.code == -32602
+        response.error.message == "Invalid params"
+
+        where:
+        method                | paramValue
+        "returnFloatArg"      | 1.234f
+        "returnBigDecimalArg" | 1.234f
+        "returnBigDecimalArg" | 1.234d
+        "returnEnumArg"       | TimeUnit.MINUTES.name()
+    }
+
     private Map callCalc(Request request) {
         return restTemplate.postForObject(
                 "http://localhost:${port}/calc",
@@ -99,6 +138,16 @@ class JsonRpcServiceExporterSpecification extends Specification {
         int subtractArray(int firstValue, int secondValue)
 
         int subtractObject(SubtractObject bean);
+
+        String returnStringArg(String value);
+
+        int returnFloatArg(float value);
+
+        double returnDoubleArg(double value);
+
+        BigDecimal returnBigDecimalArg(BigDecimal value);
+
+        TimeUnit returnEnumArg(TimeUnit value)
     }
 
     static class CalcServiceImpl implements CalcService {
@@ -111,6 +160,31 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Override
         int subtractObject(SubtractObject bean) {
             return bean.firstValue - bean.secondValue
+        }
+
+        @Override
+        String returnStringArg(String value) {
+            return value
+        }
+
+        @Override
+        int returnFloatArg(float value) {
+            return value
+        }
+
+        @Override
+        double returnDoubleArg(double value) {
+            return value
+        }
+
+        @Override
+        BigDecimal returnBigDecimalArg(BigDecimal value) {
+            return value
+        }
+
+        @Override
+        TimeUnit returnEnumArg(TimeUnit value) {
+            return value
         }
     }
 
