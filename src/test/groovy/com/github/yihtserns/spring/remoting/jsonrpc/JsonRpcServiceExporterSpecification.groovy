@@ -72,10 +72,10 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result == 10 - 3
     }
 
-    def "supported data types"() {
+    def "supported array params data types"() {
         when:
         def response = callCalc(new Request(
-                id: UUID.randomUUID() as String,
+                id: UUID.randomUUID(),
                 method: method,
                 params: [paramValue]))
 
@@ -86,13 +86,13 @@ class JsonRpcServiceExporterSpecification extends Specification {
         where:
         method            | paramValue
         "returnStringArg" | "Expected Param Value"
-        "returnDoubleArg" | 1.234d
+        "returnDoubleArg" | 1.234
     }
 
-    def "unsupported data types"() {
+    def "unsupported array params data types"() {
         when:
         def response = callCalc(new Request(
-                id: UUID.randomUUID() as String,
+                id: UUID.randomUUID(),
                 method: method,
                 params: [paramValue]))
 
@@ -103,10 +103,47 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         where:
         method                | paramValue
-        "returnFloatArg"      | 1.234f
-        "returnBigDecimalArg" | 1.234f
-        "returnBigDecimalArg" | 1.234d
+        "returnFloatArg"      | 1.234
+        "returnBigDecimalArg" | 1.234
         "returnEnumArg"       | TimeUnit.MINUTES.name()
+    }
+
+    def "supported object params data types"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "returnObjectArg",
+                params: [(paramName): paramValue]))
+
+        then:
+        response.error == null
+        response.result[paramName] == paramValue
+
+        where:
+        paramName         | paramValue
+        "stringValue"     | "Expected Param Value"
+        "floatValue"      | 1.234
+        "doubleValue"     | 1.234
+        "bigDecimalValue" | 1.234
+        "enumValue"       | TimeUnit.MINUTES.name()
+    }
+
+    def "unsupported object params data types"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "returnObjectArg",
+                params: [(paramName): paramValue]))
+
+        then:
+        response.result == null
+        response.error.code == -32602
+        response.error.message == "Invalid params"
+
+        where:
+        paramName                 | paramValue
+        "objectValue"             | [stringValue: "Expected Nested Param Value"]
+        "objectValue.stringValue" | "Expected Nested Param Value"
     }
 
     private Map callCalc(Request request) {
@@ -137,17 +174,19 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         int subtractArray(int firstValue, int secondValue)
 
-        int subtractObject(SubtractObject bean);
+        int subtractObject(SubtractObject bean)
 
-        String returnStringArg(String value);
+        String returnStringArg(String value)
 
-        int returnFloatArg(float value);
+        int returnFloatArg(float value)
 
-        double returnDoubleArg(double value);
+        double returnDoubleArg(double value)
 
-        BigDecimal returnBigDecimalArg(BigDecimal value);
+        BigDecimal returnBigDecimalArg(BigDecimal value)
 
         TimeUnit returnEnumArg(TimeUnit value)
+
+        DataTypeObject returnObjectArg(DataTypeObject value)
     }
 
     static class CalcServiceImpl implements CalcService {
@@ -186,12 +225,27 @@ class JsonRpcServiceExporterSpecification extends Specification {
         TimeUnit returnEnumArg(TimeUnit value) {
             return value
         }
+
+        @Override
+        DataTypeObject returnObjectArg(DataTypeObject value) {
+            return value
+        }
     }
 
     static class SubtractObject {
 
         int firstValue
         int secondValue
+    }
+
+    static class DataTypeObject {
+
+        String stringValue
+        float floatValue
+        double doubleValue
+        BigDecimal bigDecimalValue
+        TimeUnit enumValue
+        DataTypeObject objectValue
     }
 
     static class Request {

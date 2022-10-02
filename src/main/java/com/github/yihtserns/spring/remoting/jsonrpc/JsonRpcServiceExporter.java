@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.ConversionNotSupportedException;
+import org.springframework.beans.NullValueInNestedPathException;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.http.MediaType;
@@ -88,8 +90,10 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                         propertyName2Value.forEach(bean::setPropertyValue);
 
                         response.setResult(method.invoke(service, beanArg));
-                    } catch (IllegalAccessException | InstantiationException e) {
+                    } catch (IllegalAccessException | InstantiationException ex) {
                         throw new IllegalArgumentException("TODO: Return error");
+                    } catch (ConversionNotSupportedException | NullValueInNestedPathException ex) {
+                        throw new IllegalArgumentException(ex);
                     }
                 } else {
                     throw new IllegalArgumentException("TODO: Return error");
