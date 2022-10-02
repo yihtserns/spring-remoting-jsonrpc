@@ -84,9 +84,15 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result == paramValue
 
         where:
-        method            | paramValue
-        "returnStringArg" | "Expected Param Value"
-        "returnDoubleArg" | 1.234
+        method                      | paramValue
+        "returnStringArg"           | "Expected Param Value"
+        "returnStringListArg"       | ["Expected Param Value"]
+        "returnStringCollectionArg" | ["Expected Param Value"]
+
+        "returnDoubleArg"           | 1.234
+        "returnDoubleWrapperArg"    | 1.234
+        "returnDoubleListArg"       | [1.234]
+        "returnDoubleCollectionArg" | [1.234]
     }
 
     def "unsupported array params data types"() {
@@ -102,10 +108,33 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.error.message == "Invalid params"
 
         where:
-        method                | paramValue
-        "returnFloatArg"      | 1.234
-        "returnBigDecimalArg" | 1.234
-        "returnEnumArg"       | TimeUnit.MINUTES.name()
+        method                        | paramValue
+        "returnStringArrayArg"        | ["Expected Param Value"]
+        "returnStringSetArg"          | ["Expected Param Value"]
+
+        "returnDoubleArrayArg"        | [1.234]
+        "returnDoubleWrapperArrayArg" | [1.234]
+        "returnDoubleSetArg"          | [1.234]
+
+        "returnFloatArg"              | 1.234
+        "returnFloatWrapperArg"       | 1.234
+        "returnFloatArrayArg"         | [1.234]
+        "returnFloatWrapperArrayArg"  | [1.234]
+// TODO:        "returnFloatListArg"            | [1.234]
+        "returnFloatSetArg"           | [1.234]
+// TODO:        "returnFloatCollectionArg"      | [1.234]
+
+        "returnBigDecimalArg"         | 1.234
+        "returnBigDecimalArrayArg"    | [1.234]
+// TODO:        "returnBigDecimalListArg"       | [1.234]
+        "returnBigDecimalSetArg"      | [1.234]
+// TODO:        "returnBigDecimalCollectionArg" | [1.234]
+
+        "returnEnumArg"               | TimeUnit.MINUTES.name()
+        "returnEnumArrayArg"          | [TimeUnit.MINUTES.name()]
+// TODO:        "returnEnumListArg"             | [TimeUnit.MINUTES.name()]
+        "returnEnumSetArg"            | [TimeUnit.MINUTES.name()]
+// TODO:        "returnEnumCollectionArg"       | [TimeUnit.MINUTES.name()]
     }
 
     def "supported object params data types"() {
@@ -144,6 +173,38 @@ class JsonRpcServiceExporterSpecification extends Specification {
         paramName                 | paramValue
         "objectValue"             | [stringValue: "Expected Nested Param Value"]
         "objectValue.stringValue" | "Expected Nested Param Value"
+    }
+
+    def "should fail when params contains incompatible value"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: method,
+                params: [paramValue]))
+
+        then:
+        response.result == null
+        response.error.code == -32602
+        response.error.message == "Invalid params"
+
+        where:
+        method                        | paramValue
+        "returnDoubleArg"             | "abc"
+        "returnDoubleWrapperArg"      | "abc"
+        "returnDoubleArrayArg"        | ["abc"]
+        "returnDoubleWrapperArrayArg" | ["abc"]
+// TODO:        "returnDoubleListArg"         | ["abc"]
+        "returnDoubleSetArg"          | ["abc"]
+// TODO:        "returnDoubleCollectionArg"   | ["abc"]
+
+// TODO:        "returnDoubleArg"             | "1.234"
+// TODO:        "returnDoubleWrapperArg"      | "1.234"
+// TODO:        "returnDoubleArrayArg"        | ["1.234"]
+// TODO:        "returnDoubleArrayArg"        | ["1.234"]
+// TODO:        "returnDoubleWrapperArrayArg" | ["1.234"]
+// TODO:        "returnDoubleListArg"         | ["1.234"]
+// TODO:        "returnDoubleSetArg"          | ["1.234"]
+// TODO:        "returnDoubleCollectionArg"   | ["1.234"]
     }
 
     def "does not support overloaded method"() {
@@ -190,13 +251,61 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         String returnStringArg(String value)
 
-        int returnFloatArg(float value)
+        String[] returnStringArrayArg(String[] value)
+
+        List<String> returnStringListArg(List<String> value)
+
+        Set<String> returnStringSetArg(Set<String> value)
+
+        Collection<String> returnStringCollectionArg(Collection<String> value)
+
+        float returnFloatArg(float value)
+
+        Float returnFloatWrapperArg(Float value)
+
+        float[] returnFloatArrayArg(float[] value)
+
+        Float[] returnFloatWrapperArrayArg(Float[] value)
+
+        List<Float> returnFloatListArg(List<Float> value)
+
+        Set<Float> returnFloatSetArg(Set<Float> value)
+
+        Collection<Float> returnFloatCollectionArg(Collection<Float> value)
 
         double returnDoubleArg(double value)
 
+        Double returnDoubleWrapperArg(Double value)
+
+        double[] returnDoubleArrayArg(double[] value)
+
+        Double[] returnDoubleWrapperArrayArg(Double[] value)
+
+        List<Double> returnDoubleListArg(List<Double> value)
+
+        Set<Double> returnDoubleSetArg(Set<Double> value)
+
+        Collection<Double> returnDoubleCollectionArg(Collection<Double> value)
+
         BigDecimal returnBigDecimalArg(BigDecimal value)
 
+        BigDecimal[] returnBigDecimalArrayArg(BigDecimal[] value)
+
+        List<BigDecimal> returnBigDecimalListArg(List<BigDecimal> value)
+
+        Set<BigDecimal> returnBigDecimalSetArg(Set<BigDecimal> value)
+
+        Collection<BigDecimal> returnBigDecimalCollectionArg(Collection<BigDecimal> value)
+
         TimeUnit returnEnumArg(TimeUnit value)
+
+        TimeUnit[] returnEnumArrayArg(TimeUnit[] value)
+
+        List<TimeUnit> returnEnumListArg(List<TimeUnit> value)
+
+        Set<TimeUnit> returnEnumSetArg(Set<TimeUnit> value)
+
+        Collection<TimeUnit> returnEnumCollectionArg(Collection<TimeUnit> value)
 
         DataTypeObject returnObjectArg(DataTypeObject value)
     }
@@ -219,7 +328,63 @@ class JsonRpcServiceExporterSpecification extends Specification {
         }
 
         @Override
-        int returnFloatArg(float value) {
+        String[] returnStringArrayArg(String[] value) {
+            return value
+        }
+
+        @Override
+        List<String> returnStringListArg(List<String> value) {
+            value.each { assert it instanceof String }
+            return value
+        }
+
+        @Override
+        Set<String> returnStringSetArg(Set<String> value) {
+            value.each { assert it instanceof String }
+            return value
+        }
+
+        @Override
+        Collection<String> returnStringCollectionArg(Collection<String> value) {
+            value.each { assert it instanceof String }
+            return value
+        }
+
+        @Override
+        float returnFloatArg(float value) {
+            return value
+        }
+
+        @Override
+        Float returnFloatWrapperArg(Float value) {
+            return value
+        }
+
+        @Override
+        float[] returnFloatArrayArg(float[] value) {
+            return value
+        }
+
+        @Override
+        Float[] returnFloatWrapperArrayArg(Float[] value) {
+            return value
+        }
+
+        @Override
+        List<Float> returnFloatListArg(List<Float> value) {
+            value.each { assert it instanceof Float }
+            return value
+        }
+
+        @Override
+        Set<Float> returnFloatSetArg(Set<Float> value) {
+            value.each { assert it instanceof Float }
+            return value
+        }
+
+        @Override
+        Collection<Float> returnFloatCollectionArg(Collection<Float> value) {
+            value.each { assert it instanceof Float }
             return value
         }
 
@@ -229,12 +394,91 @@ class JsonRpcServiceExporterSpecification extends Specification {
         }
 
         @Override
+        Double returnDoubleWrapperArg(Double value) {
+            return value
+        }
+
+        @Override
+        double[] returnDoubleArrayArg(double[] value) {
+            return value
+        }
+
+        @Override
+        Double[] returnDoubleWrapperArrayArg(Double[] value) {
+            return value
+        }
+
+        @Override
+        List<Double> returnDoubleListArg(List<Double> value) {
+            value.each { assert it instanceof Double }
+            return value
+        }
+
+        @Override
+        Set<Double> returnDoubleSetArg(Set<Double> value) {
+            value.each { assert it instanceof Double }
+            return value
+        }
+
+        @Override
+        Collection<Double> returnDoubleCollectionArg(Collection<Double> value) {
+            value.each { assert it instanceof Double }
+            return value
+        }
+
+        @Override
         BigDecimal returnBigDecimalArg(BigDecimal value) {
             return value
         }
 
         @Override
+        BigDecimal[] returnBigDecimalArrayArg(BigDecimal[] value) {
+            return value
+        }
+
+        @Override
+        List<BigDecimal> returnBigDecimalListArg(List<BigDecimal> value) {
+            value.each { assert it instanceof BigDecimal }
+            return value
+        }
+
+        @Override
+        Set<BigDecimal> returnBigDecimalSetArg(Set<BigDecimal> value) {
+            value.each { assert it instanceof BigDecimal }
+            return value
+        }
+
+        @Override
+        Collection<BigDecimal> returnBigDecimalCollectionArg(Collection<BigDecimal> value) {
+            value.each { assert it instanceof BigDecimal }
+            return value
+        }
+
+        @Override
         TimeUnit returnEnumArg(TimeUnit value) {
+            return value
+        }
+
+        @Override
+        TimeUnit[] returnEnumArrayArg(TimeUnit[] value) {
+            return value
+        }
+
+        @Override
+        List<TimeUnit> returnEnumListArg(List<TimeUnit> value) {
+            value.each { assert it instanceof TimeUnit }
+            return value
+        }
+
+        @Override
+        Set<TimeUnit> returnEnumSetArg(Set<TimeUnit> value) {
+            value.each { assert it instanceof TimeUnit }
+            return value
+        }
+
+        @Override
+        Collection<TimeUnit> returnEnumCollectionArg(Collection<TimeUnit> value) {
+            value.each { assert it instanceof TimeUnit }
             return value
         }
 
