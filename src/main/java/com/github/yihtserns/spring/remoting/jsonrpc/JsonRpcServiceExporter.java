@@ -55,7 +55,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
 
         for (Method method : serviceInterface.getMethods()) {
             if (name2Method.containsKey(method.getName())) {
-                // TODO: throw
+                throw new IllegalArgumentException("Duplicate method name is not supported: " + method.getName());
             }
             name2Method.put(method.getName(), method);
         }

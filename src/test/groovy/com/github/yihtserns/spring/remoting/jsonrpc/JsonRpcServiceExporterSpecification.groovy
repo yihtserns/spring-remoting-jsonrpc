@@ -146,6 +146,18 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "objectValue.stringValue" | "Expected Nested Param Value"
     }
 
+    def "does not support overloaded method"() {
+        when:
+        def exporter = new JsonRpcServiceExporter(
+                serviceInterface: OverloadedMethodService,
+                service: OverloadedMethodServiceImpl)
+        exporter.afterPropertiesSet()
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == "Duplicate method name is not supported: overloaded"
+    }
+
     private Map callCalc(Request request) {
         return restTemplate.postForObject(
                 "http://localhost:${port}/calc",
@@ -246,6 +258,26 @@ class JsonRpcServiceExporterSpecification extends Specification {
         BigDecimal bigDecimalValue
         TimeUnit enumValue
         DataTypeObject objectValue
+    }
+
+    interface OverloadedMethodService {
+
+        int overloaded(String value)
+
+        int overloaded(int value)
+    }
+
+    class OverloadedMethodServiceImpl implements OverloadedMethodService {
+
+        @Override
+        int overloaded(String value) {
+            return 0
+        }
+
+        @Override
+        int overloaded(int value) {
+            return 0
+        }
     }
 
     static class Request {
