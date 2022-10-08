@@ -82,49 +82,55 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result == expectedReturnValue
 
         where:
-        method                          | paramValue                | expectedReturnValue
-        "returnStringArg"               | "Expected Param Value"    | paramValue
-        "returnStringArrayArg"          | ["Expected Param Value"]  | paramValue
-        "returnStringListArg"           | ["Expected Param Value"]  | paramValue
-        "returnStringSetArg"            | ["Expected Param Value"]  | paramValue
-        "returnStringCollectionArg"     | ["Expected Param Value"]  | paramValue
+        method                          | paramValue                               | expectedReturnValue
+        "returnStringArg"               | "Expected Param Value"                   | paramValue
+        "returnStringArrayArg"          | ["Expected Param Value"]                 | paramValue
+        "returnStringListArg"           | ["Expected Param Value"]                 | paramValue
+        "returnStringSetArg"            | ["Expected Param Value"]                 | paramValue
+        "returnStringCollectionArg"     | ["Expected Param Value"]                 | paramValue
 
-        "returnDoubleArg"               | 1.234                     | paramValue
-        "returnDoubleWrapperArg"        | 1.234                     | paramValue
-        "returnDoubleArrayArg"          | [1.234]                   | paramValue
-        "returnDoubleWrapperArrayArg"   | [1.234]                   | paramValue
-        "returnDoubleListArg"           | [1.234]                   | paramValue
-        "returnDoubleSetArg"            | [1.234]                   | paramValue
-        "returnDoubleCollectionArg"     | [1.234]                   | paramValue
+        "returnDoubleArg"               | 1.234                                    | paramValue
+        "returnDoubleWrapperArg"        | 1.234                                    | paramValue
+        "returnDoubleArrayArg"          | [1.234]                                  | paramValue
+        "returnDoubleWrapperArrayArg"   | [1.234]                                  | paramValue
+        "returnDoubleListArg"           | [1.234]                                  | paramValue
+        "returnDoubleSetArg"            | [1.234]                                  | paramValue
+        "returnDoubleCollectionArg"     | [1.234]                                  | paramValue
 
         // String-to-X auto-conversion
-        "returnDoubleArg"               | "1.234"                   | 1.234
-        "returnDoubleWrapperArg"        | "1.234"                   | 1.234
-        "returnDoubleArrayArg"          | ["1.234"]                 | [1.234]
-        "returnDoubleWrapperArrayArg"   | ["1.234"]                 | [1.234]
-        "returnDoubleListArg"           | ["1.234"]                 | [1.234]
-        "returnDoubleSetArg"            | ["1.234"]                 | [1.234]
-        "returnDoubleCollectionArg"     | ["1.234"]                 | [1.234]
+        "returnDoubleArg"               | "1.234"                                  | 1.234
+        "returnDoubleWrapperArg"        | "1.234"                                  | 1.234
+        "returnDoubleArrayArg"          | ["1.234"]                                | [1.234]
+        "returnDoubleWrapperArrayArg"   | ["1.234"]                                | [1.234]
+        "returnDoubleListArg"           | ["1.234"]                                | [1.234]
+        "returnDoubleSetArg"            | ["1.234"]                                | [1.234]
+        "returnDoubleCollectionArg"     | ["1.234"]                                | [1.234]
 
-        "returnFloatArg"                | 1.234                     | paramValue
-        "returnFloatWrapperArg"         | 1.234                     | paramValue
-        "returnFloatArrayArg"           | [1.234]                   | paramValue
-        "returnFloatWrapperArrayArg"    | [1.234]                   | paramValue
-        "returnFloatListArg"            | [1.234]                   | paramValue
-        "returnFloatSetArg"             | [1.234]                   | paramValue
-        "returnFloatCollectionArg"      | [1.234]                   | paramValue
+        "returnFloatArg"                | 1.234                                    | paramValue
+        "returnFloatWrapperArg"         | 1.234                                    | paramValue
+        "returnFloatArrayArg"           | [1.234]                                  | paramValue
+        "returnFloatWrapperArrayArg"    | [1.234]                                  | paramValue
+        "returnFloatListArg"            | [1.234]                                  | paramValue
+        "returnFloatSetArg"             | [1.234]                                  | paramValue
+        "returnFloatCollectionArg"      | [1.234]                                  | paramValue
 
-        "returnBigDecimalArg"           | 1.234                     | paramValue
-        "returnBigDecimalArrayArg"      | [1.234]                   | paramValue
-        "returnBigDecimalListArg"       | [1.234]                   | paramValue
-        "returnBigDecimalSetArg"        | [1.234]                   | paramValue
-        "returnBigDecimalCollectionArg" | [1.234]                   | paramValue
+        "returnBigDecimalArg"           | 1.234                                    | paramValue
+        "returnBigDecimalArrayArg"      | [1.234]                                  | paramValue
+        "returnBigDecimalListArg"       | [1.234]                                  | paramValue
+        "returnBigDecimalSetArg"        | [1.234]                                  | paramValue
+        "returnBigDecimalCollectionArg" | [1.234]                                  | paramValue
 
-        "returnEnumArg"                 | TimeUnit.MINUTES.name()   | paramValue
-        "returnEnumArrayArg"            | [TimeUnit.MINUTES.name()] | paramValue
-        "returnEnumListArg"             | [TimeUnit.MINUTES.name()] | paramValue
-        "returnEnumSetArg"              | [TimeUnit.MINUTES.name()] | paramValue
-        "returnEnumCollectionArg"       | [TimeUnit.MINUTES.name()] | paramValue
+        "returnEnumArg"                 | TimeUnit.MINUTES.name()                  | paramValue
+        "returnEnumArrayArg"            | [TimeUnit.MINUTES.name()]                | paramValue
+        "returnEnumListArg"             | [TimeUnit.MINUTES.name()]                | paramValue
+        "returnEnumSetArg"              | [TimeUnit.MINUTES.name()]                | paramValue
+        "returnEnumCollectionArg"       | [TimeUnit.MINUTES.name()]                | paramValue
+
+        "returnMapArg"                  | ["Key 1": 1, "Key 2": 2]                 | paramValue
+        "returnMapArrayArg"             | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
+        "returnMapListArg"              | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
+        "returnMapSetArg"               | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
+        "returnMapCollectionArg"        | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
     }
 
     def "supported object params data types"() {
@@ -173,6 +179,12 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "enumListValue"             | [TimeUnit.MINUTES.name()]
         "enumSetValue"              | [TimeUnit.MINUTES.name()]
         "enumCollectionValue"       | [TimeUnit.MINUTES.name()]
+
+        "mapValue"                  | ["Key 1": 1, "Key 2": 2]
+        "mapArrayValue"             | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
+        "mapListValue"              | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
+        "mapSetValue"               | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
+        "mapCollectionValue"        | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
     }
 
     def "unsupported object params data types"() {
@@ -334,6 +346,16 @@ class JsonRpcServiceExporterSpecification extends Specification {
         Set<TimeUnit> returnEnumSetArg(Set<TimeUnit> value)
 
         Collection<TimeUnit> returnEnumCollectionArg(Collection<TimeUnit> value)
+
+        Map<String, Integer> returnMapArg(Map<String, Integer> value)
+
+        Map<String, Integer>[] returnMapArrayArg(Map<String, Integer>[] value)
+
+        List<Map<String, Integer>> returnMapListArg(List<Map<String, Integer>> value)
+
+        Set<Map<String, Integer>> returnMapSetArg(Set<Map<String, Integer>> value)
+
+        Collection<Map<String, Integer>> returnMapCollectionArg(Collection<Map<String, Integer>> value)
 
         DataTypeObject returnObjectArg(DataTypeObject value)
 
@@ -515,6 +537,36 @@ class JsonRpcServiceExporterSpecification extends Specification {
         }
 
         @Override
+        Map<String, Integer> returnMapArg(Map<String, Integer> value) {
+            value.each { k, v -> assert k instanceof String && v instanceof Integer }
+            return value
+        }
+
+        @Override
+        Map<String, Integer>[] returnMapArrayArg(Map<String, Integer>[] value) {
+            value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+            return value
+        }
+
+        @Override
+        List<Map<String, Integer>> returnMapListArg(List<Map<String, Integer>> value) {
+            value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+            return value
+        }
+
+        @Override
+        Set<Map<String, Integer>> returnMapSetArg(Set<Map<String, Integer>> value) {
+            value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+            return value
+        }
+
+        @Override
+        Collection<Map<String, Integer>> returnMapCollectionArg(Collection<Map<String, Integer>> value) {
+            value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+            return value
+        }
+
+        @Override
         DataTypeObject returnObjectArg(DataTypeObject value) {
             value.stringListValue.each { assert it instanceof String }
             value.stringSetValue.each { assert it instanceof String }
@@ -535,6 +587,12 @@ class JsonRpcServiceExporterSpecification extends Specification {
             value.enumListValue.each { assert it instanceof TimeUnit }
             value.enumSetValue.each { assert it instanceof TimeUnit }
             value.enumCollectionValue.each { assert it instanceof TimeUnit }
+
+            value.mapValue.each { k, v -> assert k instanceof String && v instanceof Integer }
+            value.mapArrayValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
+            value.mapListValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
+            value.mapSetValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
+            value.mapCollectionValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
 
             return value
         }
@@ -591,6 +649,12 @@ class JsonRpcServiceExporterSpecification extends Specification {
         List<TimeUnit> enumListValue
         Set<TimeUnit> enumSetValue
         Collection<TimeUnit> enumCollectionValue
+
+        Map<String, Integer> mapValue
+        Map<String, Integer>[] mapArrayValue
+        List<Map<String, Integer>> mapListValue
+        Set<Map<String, Integer>> mapSetValue
+        Collection<Map<String, Integer>> mapCollectionValue
 
         DataTypeObject objectValue
     }
