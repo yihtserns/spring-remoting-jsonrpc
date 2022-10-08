@@ -54,9 +54,19 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
 
     @Override
     public void afterPropertiesSet() {
-        // TODO: serviceInterface != null
-        // TODO: service != null
-        // TODO: service implements serviceInterface
+        if (service == null) {
+            throw new IllegalArgumentException("Property 'service' is required");
+        }
+        if (serviceInterface == null) {
+            throw new IllegalArgumentException("Property 'serviceInterface' is required");
+        }
+        if (!serviceInterface.isInstance(service)) {
+            throw new IllegalArgumentException(String.format(
+                    "Service interface [%s] needs to be implemented by service [%s] of class [%s]",
+                    serviceInterface.getName(),
+                    service,
+                    service.getClass().getName()));
+        }
 
         for (Method method : serviceInterface.getMethods()) {
             if (name2Method.containsKey(method.getName())) {

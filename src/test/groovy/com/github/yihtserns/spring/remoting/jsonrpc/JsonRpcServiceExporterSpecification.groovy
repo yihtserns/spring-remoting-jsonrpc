@@ -251,12 +251,42 @@ class JsonRpcServiceExporterSpecification extends Specification {
         when:
         def exporter = new JsonRpcServiceExporter(
                 serviceInterface: OverloadedMethodService,
-                service: OverloadedMethodServiceImpl)
+                service: new OverloadedMethodServiceImpl())
         exporter.afterPropertiesSet()
 
         then:
         def ex = thrown(IllegalArgumentException)
         ex.message == "Duplicate method name is not supported: overloaded"
+    }
+
+    def "should throw when service is not configured properly"() {
+        given:
+        def exporter = new JsonRpcServiceExporter()
+
+        when:
+        exporter.afterPropertiesSet()
+
+        then:
+        def missingServiceEx = thrown(IllegalArgumentException)
+        missingServiceEx.message == "Property 'service' is required"
+
+        when:
+        exporter.service = new Object()
+        exporter.afterPropertiesSet()
+
+        then:
+        def missingServiceInterfaceEx = thrown(IllegalArgumentException)
+        missingServiceInterfaceEx.message == "Property 'serviceInterface' is required"
+
+        when:
+        exporter.serviceInterface = CalcService
+        exporter.afterPropertiesSet()
+
+        then:
+        def implementationEx = thrown(IllegalArgumentException)
+        implementationEx.message == "Service interface [${CalcService.name}]" +
+                " needs to be implemented by service [${exporter.@service}]" +
+                " of class [${exporter.@service.class.name}]"
     }
 
     private Map callCalc(Request request) {
