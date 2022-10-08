@@ -139,12 +139,40 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result[paramName] == paramValue
 
         where:
-        paramName         | paramValue
-        "stringValue"     | "Expected Param Value"
-        "floatValue"      | 1.234
-        "doubleValue"     | 1.234
-        "bigDecimalValue" | 1.234
-        "enumValue"       | TimeUnit.MINUTES.name()
+        paramName                   | paramValue
+        "stringValue"               | "Expected Param Value"
+        "stringArrayValue"          | ["Expected Param Value"]
+        "stringListValue"           | ["Expected Param Value"]
+        "stringSetValue"            | ["Expected Param Value"]
+        "stringCollectionValue"     | ["Expected Param Value"]
+
+        "doubleValue"               | 1.234
+        "doubleWrapperValue"        | 1.234
+        "doubleArrayValue"          | [1.234]
+        "doubleWrapperArrayValue"   | [1.234]
+        "doubleListValue"           | [1.234]
+        "doubleSetValue"            | [1.234]
+        "doubleCollectionValue"     | [1.234]
+
+        "floatValue"                | 1.234
+        "floatWrapperValue"         | 1.234
+        "floatArrayValue"           | [1.234]
+        "floatWrapperArrayValue"    | [1.234]
+        "floatListValue"            | [1.234]
+        "floatSetValue"             | [1.234]
+        "floatCollectionValue"      | [1.234]
+
+        "bigDecimalValue"           | 1.234
+        "bigDecimalArrayValue"      | [1.234]
+        "bigDecimalListValue"       | [1.234]
+        "bigDecimalSetValue"        | [1.234]
+        "bigDecimalCollectionValue" | [1.234]
+
+        "enumValue"                 | TimeUnit.MINUTES.name()
+        "enumArrayValue"            | [TimeUnit.MINUTES.name()]
+        "enumListValue"             | [TimeUnit.MINUTES.name()]
+        "enumSetValue"              | [TimeUnit.MINUTES.name()]
+        "enumCollectionValue"       | [TimeUnit.MINUTES.name()]
     }
 
     def "unsupported object params data types"() {
@@ -259,20 +287,6 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         Collection<String> returnStringCollectionArg(Collection<String> value)
 
-        float returnFloatArg(float value)
-
-        Float returnFloatWrapperArg(Float value)
-
-        float[] returnFloatArrayArg(float[] value)
-
-        Float[] returnFloatWrapperArrayArg(Float[] value)
-
-        List<Float> returnFloatListArg(List<Float> value)
-
-        Set<Float> returnFloatSetArg(Set<Float> value)
-
-        Collection<Float> returnFloatCollectionArg(Collection<Float> value)
-
         double returnDoubleArg(double value)
 
         Double returnDoubleWrapperArg(Double value)
@@ -286,6 +300,20 @@ class JsonRpcServiceExporterSpecification extends Specification {
         Set<Double> returnDoubleSetArg(Set<Double> value)
 
         Collection<Double> returnDoubleCollectionArg(Collection<Double> value)
+
+        float returnFloatArg(float value)
+
+        Float returnFloatWrapperArg(Float value)
+
+        float[] returnFloatArrayArg(float[] value)
+
+        Float[] returnFloatWrapperArrayArg(Float[] value)
+
+        List<Float> returnFloatListArg(List<Float> value)
+
+        Set<Float> returnFloatSetArg(Set<Float> value)
+
+        Collection<Float> returnFloatCollectionArg(Collection<Float> value)
 
         BigDecimal returnBigDecimalArg(BigDecimal value)
 
@@ -355,44 +383,6 @@ class JsonRpcServiceExporterSpecification extends Specification {
         }
 
         @Override
-        float returnFloatArg(float value) {
-            return value
-        }
-
-        @Override
-        Float returnFloatWrapperArg(Float value) {
-            return value
-        }
-
-        @Override
-        float[] returnFloatArrayArg(float[] value) {
-            return value
-        }
-
-        @Override
-        Float[] returnFloatWrapperArrayArg(Float[] value) {
-            return value
-        }
-
-        @Override
-        List<Float> returnFloatListArg(List<Float> value) {
-            value.each { assert it instanceof Float }
-            return value
-        }
-
-        @Override
-        Set<Float> returnFloatSetArg(Set<Float> value) {
-            value.each { assert it instanceof Float }
-            return value
-        }
-
-        @Override
-        Collection<Float> returnFloatCollectionArg(Collection<Float> value) {
-            value.each { assert it instanceof Float }
-            return value
-        }
-
-        @Override
         double returnDoubleArg(double value) {
             return value
         }
@@ -427,6 +417,44 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Override
         Collection<Double> returnDoubleCollectionArg(Collection<Double> value) {
             value.each { assert it instanceof Double }
+            return value
+        }
+
+        @Override
+        float returnFloatArg(float value) {
+            return value
+        }
+
+        @Override
+        Float returnFloatWrapperArg(Float value) {
+            return value
+        }
+
+        @Override
+        float[] returnFloatArrayArg(float[] value) {
+            return value
+        }
+
+        @Override
+        Float[] returnFloatWrapperArrayArg(Float[] value) {
+            return value
+        }
+
+        @Override
+        List<Float> returnFloatListArg(List<Float> value) {
+            value.each { assert it instanceof Float }
+            return value
+        }
+
+        @Override
+        Set<Float> returnFloatSetArg(Set<Float> value) {
+            value.each { assert it instanceof Float }
+            return value
+        }
+
+        @Override
+        Collection<Float> returnFloatCollectionArg(Collection<Float> value) {
+            value.each { assert it instanceof Float }
             return value
         }
 
@@ -488,6 +516,26 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         @Override
         DataTypeObject returnObjectArg(DataTypeObject value) {
+            value.stringListValue.each { assert it instanceof String }
+            value.stringSetValue.each { assert it instanceof String }
+            value.stringCollectionValue.each { assert it instanceof String }
+
+            value.doubleListValue.each { assert it instanceof Double }
+            value.doubleSetValue.each { assert it instanceof Double }
+            value.doubleCollectionValue.each { assert it instanceof Double }
+
+            value.floatListValue.each { assert it instanceof Float }
+            value.floatSetValue.each { assert it instanceof Float }
+            value.floatCollectionValue.each { assert it instanceof Float }
+
+            value.bigDecimalListValue.each { assert it instanceof BigDecimal }
+            value.bigDecimalSetValue.each { assert it instanceof BigDecimal }
+            value.bigDecimalCollectionValue.each { assert it instanceof BigDecimal }
+
+            value.enumListValue.each { assert it instanceof TimeUnit }
+            value.enumSetValue.each { assert it instanceof TimeUnit }
+            value.enumCollectionValue.each { assert it instanceof TimeUnit }
+
             return value
         }
 
@@ -511,10 +559,39 @@ class JsonRpcServiceExporterSpecification extends Specification {
     static class DataTypeObject {
 
         String stringValue
-        float floatValue
+        String[] stringArrayValue
+        List<String> stringListValue
+        List<String> stringSetValue
+        Collection<String> stringCollectionValue
+
         double doubleValue
+        Double doubleWrapperValue
+        double[] doubleArrayValue
+        Double[] doubleWrapperArrayValue
+        List<Double> doubleListValue
+        Set<Double> doubleSetValue
+        Collection<Double> doubleCollectionValue
+
+        float floatValue
+        Float floatWrapperValue
+        float[] floatArrayValue
+        Float[] floatWrapperArrayValue
+        List<Float> floatListValue
+        Set<Float> floatSetValue
+        Collection<Float> floatCollectionValue
+
         BigDecimal bigDecimalValue
+        BigDecimal[] bigDecimalArrayValue
+        List<BigDecimal> bigDecimalListValue
+        Set<BigDecimal> bigDecimalSetValue
+        Collection<BigDecimal> bigDecimalCollectionValue
+
         TimeUnit enumValue
+        TimeUnit[] enumArrayValue
+        List<TimeUnit> enumListValue
+        Set<TimeUnit> enumSetValue
+        Collection<TimeUnit> enumCollectionValue
+
         DataTypeObject objectValue
     }
 
