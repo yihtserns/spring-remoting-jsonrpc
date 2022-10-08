@@ -91,55 +91,9 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                 response.setError(JsonRpcResponse.Error.methodNotFound());
             } else {
                 if (request.getParams() instanceof List) {
-                    List<Object> requestParameters = (List) request.getParams();
-                    Parameter[] methodParameters = method.getParameters();
-
-                    if (requestParameters.size() != methodParameters.length) {
-                        // TODO: Better error message & error response
-                        log.error("Expecting array params of length {} but was {}", methodParameters.length, requestParameters.size());
-                        response.setError(JsonRpcResponse.Error.invalidParams());
-                    } else {
-                        SimpleTypeConverter typeConverter = new SimpleTypeConverter();
-
-                        try {
-                            List<Object> params = new ArrayList<>();
-                            for (int i = 0; i < methodParameters.length; i++) {
-                                Parameter methodParameter = methodParameters[i];
-                                Object rawMethodArgument = requestParameters.get(i);
-
-                                Object methodArgument = typeConverter.convertIfNecessary(
-                                        rawMethodArgument,
-                                        methodParameter.getType(),
-                                        MethodParameter.forParameter(methodParameter));
-
-                                params.add(methodArgument);
-                            }
-
-                            response.setResult(method.invoke(service, params.toArray()));
-                        } catch (TypeMismatchException ex) {
-                            // TODO: Better error message & error response
-                            log.error("Failed to convert params entry type to method argument type", ex);
-                            response.setError(JsonRpcResponse.Error.invalidParams());
-                        }
-                    }
+                    executeArrayParamsMethod(request, response, method);
                 } else if (request.getParams() instanceof Map) {
-                    // TODO: When empty object
-                    try {
-                        Map<String, Object> propertyName2Value = (Map) request.getParams();
-
-                        Object beanArg = method.getParameters()[0].getType().newInstance();
-                        BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(beanArg);
-
-                        // TODO: When property not found
-                        // TODO: When property count does not match bean property count
-                        propertyName2Value.forEach(bean::setPropertyValue);
-
-                        response.setResult(method.invoke(service, beanArg));
-                    } catch (IllegalAccessException | InstantiationException ex) {
-                        throw new IllegalArgumentException("TODO: Return error");
-                    } catch (ConversionNotSupportedException | NullValueInNestedPathException ex) {
-                        throw new IllegalArgumentException(ex);
-                    }
+                    executeObjectParamsMethod(request, response, method);
                 } else {
                     throw new IllegalArgumentException("TODO: Return error");
                 }
@@ -157,5 +111,59 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
 
         httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(httpResponse.getOutputStream(), response);
+    }
+
+    private void executeArrayParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException {
+        List<Object> requestParameters = (List) request.getParams();
+        Parameter[] methodParameters = method.getParameters();
+
+        if (requestParameters.size() != methodParameters.length) {
+            // TODO: Better error message & error response
+            log.error("Expecting array params of length {} but was {}", methodParameters.length, requestParameters.size());
+            response.setError(JsonRpcResponse.Error.invalidParams());
+            return;
+        }
+
+        SimpleTypeConverter typeConverter = new SimpleTypeConverter();
+        try {
+            List<Object> params = new ArrayList<>();
+            for (int i = 0; i < methodParameters.length; i++) {
+                Parameter methodParameter = methodParameters[i];
+                Object rawMethodArgument = requestParameters.get(i);
+
+                Object methodArgument = typeConverter.convertIfNecessary(
+                        rawMethodArgument,
+                        methodParameter.getType(),
+                        MethodParameter.forParameter(methodParameter));
+
+                params.add(methodArgument);
+            }
+
+            response.setResult(method.invoke(service, params.toArray()));
+        } catch (TypeMismatchException ex) {
+            // TODO: Better error message & error response
+            log.error("Failed to convert params entry type to method argument type", ex);
+            response.setError(JsonRpcResponse.Error.invalidParams());
+        }
+    }
+
+    private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException {
+        // TODO: When empty object
+        try {
+            Map<String, Object> propertyName2Value = (Map) request.getParams();
+
+            Object beanArg = method.getParameters()[0].getType().newInstance();
+            BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(beanArg);
+
+            // TODO: When property not found
+            // TODO: When property count does not match bean property count
+            propertyName2Value.forEach(bean::setPropertyValue);
+
+            response.setResult(method.invoke(service, beanArg));
+        } catch (IllegalAccessException | InstantiationException ex) {
+            throw new IllegalArgumentException("TODO: Return error");
+        } catch (ConversionNotSupportedException | NullValueInNestedPathException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 }
