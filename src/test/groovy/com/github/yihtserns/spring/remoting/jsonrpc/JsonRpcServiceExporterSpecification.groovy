@@ -89,6 +89,14 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnStringSetArg"            | ["Expected Param Value"]                 | paramValue
         "returnStringCollectionArg"     | ["Expected Param Value"]                 | paramValue
 
+        "returnBooleanArg"              | true                                     | paramValue
+        "returnBooleanWrapperArg"       | true                                     | paramValue
+        "returnBooleanArrayArg"         | [true, false, true]                      | paramValue
+        "returnBooleanWrapperArrayArg"  | [true, false, true]                      | paramValue
+        "returnBooleanListArg"          | [true, false, true]                      | paramValue
+        "returnBooleanSetArg"           | [true, false, true]                      | [true, false]
+        "returnBooleanCollectionArg"    | [true, false, true]                      | paramValue
+
         "returnDoubleArg"               | 1.234                                    | paramValue
         "returnDoubleWrapperArg"        | 1.234                                    | paramValue
         "returnDoubleArrayArg"          | [1.234]                                  | paramValue
@@ -142,49 +150,57 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         then:
         response.error == null
-        response.result[paramName] == paramValue
+        response.result[paramName] == expectedReturnValue
 
         where:
-        paramName                   | paramValue
-        "stringValue"               | "Expected Param Value"
-        "stringArrayValue"          | ["Expected Param Value"]
-        "stringListValue"           | ["Expected Param Value"]
-        "stringSetValue"            | ["Expected Param Value"]
-        "stringCollectionValue"     | ["Expected Param Value"]
+        paramName                   | paramValue                               | expectedReturnValue
+        "stringValue"               | "Expected Param Value"                   | paramValue
+        "stringArrayValue"          | ["Expected Param Value"]                 | paramValue
+        "stringListValue"           | ["Expected Param Value"]                 | paramValue
+        "stringSetValue"            | ["Expected Param Value"]                 | paramValue
+        "stringCollectionValue"     | ["Expected Param Value"]                 | paramValue
 
-        "doubleValue"               | 1.234
-        "doubleWrapperValue"        | 1.234
-        "doubleArrayValue"          | [1.234]
-        "doubleWrapperArrayValue"   | [1.234]
-        "doubleListValue"           | [1.234]
-        "doubleSetValue"            | [1.234]
-        "doubleCollectionValue"     | [1.234]
+        "booleanValue"              | true                                     | paramValue
+        "booleanWrapperValue"       | true                                     | paramValue
+        "booleanArrayValue"         | [true, false, true]                      | paramValue
+        "booleanWrapperArrayValue"  | [true, false, true]                      | paramValue
+        "booleanListValue"          | [true, false, true]                      | paramValue
+        "booleanSetValue"           | [true, false, true]                      | [true, false]
+        "booleanCollectionValue"    | [true, false, true]                      | paramValue
 
-        "floatValue"                | 1.234
-        "floatWrapperValue"         | 1.234
-        "floatArrayValue"           | [1.234]
-        "floatWrapperArrayValue"    | [1.234]
-        "floatListValue"            | [1.234]
-        "floatSetValue"             | [1.234]
-        "floatCollectionValue"      | [1.234]
+        "doubleValue"               | 1.234                                    | paramValue
+        "doubleWrapperValue"        | 1.234                                    | paramValue
+        "doubleArrayValue"          | [1.234]                                  | paramValue
+        "doubleWrapperArrayValue"   | [1.234]                                  | paramValue
+        "doubleListValue"           | [1.234]                                  | paramValue
+        "doubleSetValue"            | [1.234]                                  | paramValue
+        "doubleCollectionValue"     | [1.234]                                  | paramValue
 
-        "bigDecimalValue"           | 1.234
-        "bigDecimalArrayValue"      | [1.234]
-        "bigDecimalListValue"       | [1.234]
-        "bigDecimalSetValue"        | [1.234]
-        "bigDecimalCollectionValue" | [1.234]
+        "floatValue"                | 1.234                                    | paramValue
+        "floatWrapperValue"         | 1.234                                    | paramValue
+        "floatArrayValue"           | [1.234]                                  | paramValue
+        "floatWrapperArrayValue"    | [1.234]                                  | paramValue
+        "floatListValue"            | [1.234]                                  | paramValue
+        "floatSetValue"             | [1.234]                                  | paramValue
+        "floatCollectionValue"      | [1.234]                                  | paramValue
 
-        "enumValue"                 | TimeUnit.MINUTES.name()
-        "enumArrayValue"            | [TimeUnit.MINUTES.name()]
-        "enumListValue"             | [TimeUnit.MINUTES.name()]
-        "enumSetValue"              | [TimeUnit.MINUTES.name()]
-        "enumCollectionValue"       | [TimeUnit.MINUTES.name()]
+        "bigDecimalValue"           | 1.234                                    | paramValue
+        "bigDecimalArrayValue"      | [1.234]                                  | paramValue
+        "bigDecimalListValue"       | [1.234]                                  | paramValue
+        "bigDecimalSetValue"        | [1.234]                                  | paramValue
+        "bigDecimalCollectionValue" | [1.234]                                  | paramValue
 
-        "mapValue"                  | ["Key 1": 1, "Key 2": 2]
-        "mapArrayValue"             | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
-        "mapListValue"              | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
-        "mapSetValue"               | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
-        "mapCollectionValue"        | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]
+        "enumValue"                 | TimeUnit.MINUTES.name()                  | paramValue
+        "enumArrayValue"            | [TimeUnit.MINUTES.name()]                | paramValue
+        "enumListValue"             | [TimeUnit.MINUTES.name()]                | paramValue
+        "enumSetValue"              | [TimeUnit.MINUTES.name()]                | paramValue
+        "enumCollectionValue"       | [TimeUnit.MINUTES.name()]                | paramValue
+
+        "mapValue"                  | ["Key 1": 1, "Key 2": 2]                 | paramValue
+        "mapArrayValue"             | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
+        "mapListValue"              | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
+        "mapSetValue"               | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
+        "mapCollectionValue"        | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]] | paramValue
     }
 
     def "unsupported object params data types"() {
@@ -329,6 +345,20 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         Collection<String> returnStringCollectionArg(Collection<String> value)
 
+        boolean returnBooleanArg(boolean value)
+
+        Boolean returnBooleanWrapperArg(Boolean value)
+
+        boolean[] returnBooleanArrayArg(boolean[] value)
+
+        Boolean[] returnBooleanWrapperArrayArg(Boolean[] value)
+
+        List<Boolean> returnBooleanListArg(List<Boolean> value)
+
+        Set<Boolean> returnBooleanSetArg(Set<Boolean> value)
+
+        Collection<Boolean> returnBooleanCollectionArg(Collection<Boolean> value)
+
         double returnDoubleArg(double value)
 
         Double returnDoubleWrapperArg(Double value)
@@ -431,6 +461,45 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Override
         Collection<String> returnStringCollectionArg(Collection<String> value) {
             value.each { assert it instanceof String }
+            return value
+        }
+
+        @Override
+        boolean returnBooleanArg(boolean value) {
+            return value
+        }
+
+        @Override
+        Boolean returnBooleanWrapperArg(Boolean value) {
+            return value
+        }
+
+        @Override
+        boolean[] returnBooleanArrayArg(boolean[] value) {
+            return value
+        }
+
+        @Override
+        Boolean[] returnBooleanWrapperArrayArg(Boolean[] value) {
+            value.each { assert it instanceof Boolean }
+            return value
+        }
+
+        @Override
+        List<Boolean> returnBooleanListArg(List<Boolean> value) {
+            value.each { assert it instanceof Boolean }
+            return value
+        }
+
+        @Override
+        Set<Boolean> returnBooleanSetArg(Set<Boolean> value) {
+            value.each { assert it instanceof Boolean }
+            return value
+        }
+
+        @Override
+        Collection<Boolean> returnBooleanCollectionArg(Collection<Boolean> value) {
+            value.each { assert it instanceof Boolean }
             return value
         }
 
@@ -651,6 +720,14 @@ class JsonRpcServiceExporterSpecification extends Specification {
         List<String> stringListValue
         List<String> stringSetValue
         Collection<String> stringCollectionValue
+
+        boolean booleanValue
+        Boolean booleanWrapperValue
+        boolean[] booleanArrayValue
+        Boolean[] booleanWrapperArrayValue
+        List<Boolean> booleanListValue
+        Set<Boolean> booleanSetValue
+        Collection<Boolean> booleanCollectionValue
 
         double doubleValue
         Double doubleWrapperValue
