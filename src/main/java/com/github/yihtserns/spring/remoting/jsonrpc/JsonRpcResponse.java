@@ -28,35 +28,28 @@ public class JsonRpcResponse {
     private Error error;
 
     @Getter
-    @Setter
     public static class Error {
 
         private int code;
         private String message;
+        @Setter
         private Object data;
 
-        public static Error methodNotFound() {
-            Error error = new Error();
-            error.code = -32601;
-            error.message = "Method not found";
+        public Error(int code, String message) {
+            this.code = code;
+            this.message = message;
+        }
 
-            return error;
+        public static Error methodNotFound() {
+            return new Error(-32601, "Method not found");
         }
 
         public static Error invalidParams() {
-            Error error = new Error();
-            error.code = -32602;
-            error.message = "Invalid params";
-
-            return error;
+            return new Error(-32602, "Invalid params");
         }
 
         public static Error internalError() {
-            Error error = new Error();
-            error.code = -32603;
-            error.message = "Internal error";
-
-            return error;
+            return new Error(-32603, "Internal error");
         }
     }
 }

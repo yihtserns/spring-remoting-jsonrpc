@@ -21,13 +21,17 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.ConversionNotSupportedException;
 import org.springframework.beans.NullValueInNestedPathException;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.http.MediaType;
 import org.springframework.web.HttpRequestHandler;
 
@@ -45,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingBean {
+public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAware, InitializingBean {
 
     private ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
@@ -56,6 +60,12 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
     private Class<?> serviceInterface;
     @Setter
     private Object service;
+    private ConversionService conversionService;
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.conversionService = beanFactory.getBean(ConversionService.class);
+    }
 
     @Override
     public void afterPropertiesSet() {
@@ -107,8 +117,20 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
             log.debug("Error when trying to call method: {}", request.getMethod(), ex);
             response.setError(JsonRpcResponse.Error.invalidParams());
         } catch (InvocationTargetException ex) {
-            log.error("Error thrown by method: {}", method, ex.getCause());
-            response.setError(JsonRpcResponse.Error.internalError());
+            if (conversionService.canConvert(ex.getCause().getClass(), JsonRpcResponse.Error.class)) {
+                response.setError(conversionService.convert(ex.getCause(), JsonRpcResponse.Error.class));
+
+                if (response.getError().getCode() <= -32000 && response.getError().getCode() >= -32768) {
+                    log.error("Exception [{}] was converted into Error object using a reserved error code: {}",
+                            ex.getCause(),
+                            response.getError().getCode());
+
+                    response.setError(JsonRpcResponse.Error.internalError());
+                }
+            } else {
+                log.error("Error thrown by method: {}", method, ex.getCause());
+                response.setError(JsonRpcResponse.Error.internalError());
+            }
         } catch (IllegalAccessException | RuntimeException ex) {
             log.error("Failed to call method: {}", request.getMethod(), ex);
             response.setError(JsonRpcResponse.Error.internalError());

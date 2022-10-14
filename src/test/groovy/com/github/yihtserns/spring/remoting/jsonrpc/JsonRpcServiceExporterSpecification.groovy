@@ -7,6 +7,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -284,6 +285,56 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
+    def "can use custom converter to transform a specific exception into error object"() {
+        when:
+        def responseWithCustomErrorObject = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "throwCustomApplicationException",
+                params: [errorCode]))
+
+        then:
+        responseWithCustomErrorObject.result == null
+        responseWithCustomErrorObject.error.code == errorCode
+        responseWithCustomErrorObject.error.message == "Custom Application Error"
+
+        where:
+        // -32000 to -32768 are reserved for pre-defined errors
+        errorCode << [
+                0,
+                999,
+                -32000 + 1,
+                -32768 - 1
+        ]
+    }
+
+    def "should return internal error if custom converter produces error object that uses reserved error code"() {
+        when:
+        def responseWithCustomErrorObject = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "throwCustomApplicationException",
+                params: [reservedErrorCode]))
+
+        then:
+        responseWithCustomErrorObject.result == null
+        responseWithCustomErrorObject.error.code == -32603
+        responseWithCustomErrorObject.error.message == "Internal error"
+
+        where:
+        reservedErrorCode | description
+        -32000            | "Reserved for pre-defined errors (start)"
+
+        -32700            | "Parse error"
+        -32600            | "Invalid Request"
+        -32601            | "Method not found"
+        -32602            | "Invalid params"
+        -32603            | "Internal error"
+
+        -32000            | "Implementation-defined server errors (start)"
+        -32099            | "Implementation-defined server errors (end)"
+
+        -32768            | "Reserved for pre-defined errors (end)"
+    }
+
     def "does not support overloaded method"() {
         when:
         def exporter = new JsonRpcServiceExporter(
@@ -347,6 +398,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Bean
         CalcService calcService() {
             return new CalcServiceImpl()
+        }
+
+        @Bean
+        CustomApplicationExceptionToError customApplicationExceptionToError() {
+            return new CustomApplicationExceptionToError()
         }
     }
 
@@ -453,6 +509,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
         void throwException()
 
         void throwError()
+
+        void throwCustomApplicationException(int errorCode) throws CustomApplicationException
     }
 
     static class CalcServiceImpl implements CalcService {
@@ -764,6 +822,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
         void throwError() {
             throw new Error("Simulated Error!")
         }
+
+        @Override
+        void throwCustomApplicationException(int errorCode) throws CustomApplicationException {
+            throw new CustomApplicationException(errorCode)
+        }
     }
 
     static class SubtractObject {
@@ -848,6 +911,23 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Override
         int overloaded(int value) {
             return 0
+        }
+    }
+
+    static class CustomApplicationException extends Exception {
+
+        int errorCode
+
+        CustomApplicationException(int errorCode) {
+            this.errorCode = errorCode
+        }
+    }
+
+    static class CustomApplicationExceptionToError implements Converter<CustomApplicationException, JsonRpcResponse.Error> {
+
+        @Override
+        JsonRpcResponse.Error convert(CustomApplicationException ex) {
+            return new JsonRpcResponse.Error(ex.errorCode, "Custom Application Error")
         }
     }
 
