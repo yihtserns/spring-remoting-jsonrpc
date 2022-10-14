@@ -16,6 +16,8 @@
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanWrapper;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +47,9 @@ import java.util.Map;
 @Slf4j
 public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingBean {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private Map<String, Method> name2Method = new HashMap<>();
 
     @Setter
@@ -125,6 +130,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         }
 
         SimpleTypeConverter typeConverter = new SimpleTypeConverter();
+        typeConverter.registerCustomEditor(OffsetDateTime.class, null, new OffsetDateTimeEditor());
         try {
             List<Object> params = new ArrayList<>();
             for (int i = 0; i < methodParameters.length; i++) {
@@ -154,6 +160,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
 
             Object beanArg = method.getParameters()[0].getType().newInstance();
             BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(beanArg);
+            bean.registerCustomEditor(OffsetDateTime.class, new OffsetDateTimeEditor());
 
             // TODO: When property not found
             // TODO: When property count does not match bean property count
