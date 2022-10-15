@@ -32,7 +32,9 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestHandler;
 
 import javax.servlet.ServletInputStream;
@@ -136,8 +138,12 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             response.setError(JsonRpcResponse.Error.internalError());
         }
 
-        httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(httpResponse.getOutputStream(), response);
+        if (StringUtils.isEmpty(request.getId())) {
+            httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
+        } else {
+            httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            objectMapper.writeValue(httpResponse.getOutputStream(), response);
+        }
     }
 
     private void executeArrayParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException {

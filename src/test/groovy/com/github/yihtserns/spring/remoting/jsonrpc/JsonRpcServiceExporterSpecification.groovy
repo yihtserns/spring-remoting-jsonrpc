@@ -10,7 +10,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import spock.lang.Specification
 
 import java.time.OffsetDateTime
@@ -335,6 +338,22 @@ class JsonRpcServiceExporterSpecification extends Specification {
         -32768            | "Reserved for pre-defined errors (end)"
     }
 
+    def "should not return anything if request does not have id"() {
+        expect:
+        with(requestCalc(new Request(method: method, params: params))) {
+            statusCode == HttpStatus.NO_CONTENT
+            body == null
+        }
+
+        where:
+        method              | params
+        "returnStringArg"   | ["not returned"]
+        "returnStringArg"   | []
+        "throwException"    | []
+        "throwError"        | []
+        "nonExistentMethod" | []
+    }
+
     def "does not support overloaded method"() {
         when:
         def exporter = new JsonRpcServiceExporter(
@@ -380,6 +399,14 @@ class JsonRpcServiceExporterSpecification extends Specification {
     private Map callCalc(Request request) {
         return restTemplate.postForObject(
                 "http://localhost:${port}/calc",
+                new HttpEntity(request, new HttpHeaders(contentType: MediaType.APPLICATION_JSON)),
+                Map)
+    }
+
+    private ResponseEntity<Map> requestCalc(Request request) {
+        return restTemplate.exchange(
+                "http://localhost:${port}/calc",
+                HttpMethod.POST,
                 new HttpEntity(request, new HttpHeaders(contentType: MediaType.APPLICATION_JSON)),
                 Map)
     }
