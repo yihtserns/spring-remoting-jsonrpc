@@ -197,7 +197,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
         }
     }
 
-    private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException {
+    private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException, IllegalAccessException {
+
         try {
             Map<String, Object> propertyName2Value = (Map) request.getParams();
 
@@ -208,7 +209,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             propertyName2Value.forEach(bean::setPropertyValue);
 
             response.setResult(method.invoke(service, beanArg));
-        } catch (IllegalAccessException | InstantiationException ex) {
+        } catch (InstantiationException ex) {
             throw new IllegalArgumentException("TODO: Return error");
         } catch (NotWritablePropertyException | ConversionNotSupportedException | NullValueInNestedPathException ex) {
             throw new IllegalArgumentException(ex);
