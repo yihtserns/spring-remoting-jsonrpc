@@ -197,7 +197,6 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
     }
 
     private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException {
-        // TODO: When empty object
         try {
             Map<String, Object> propertyName2Value = (Map) request.getParams();
 
@@ -206,7 +205,6 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             bean.registerCustomEditor(OffsetDateTime.class, new OffsetDateTimeEditor());
 
             // TODO: When property not found
-            // TODO: When property count does not match bean property count
             propertyName2Value.forEach(bean::setPropertyValue);
 
             response.setResult(method.invoke(service, beanArg));

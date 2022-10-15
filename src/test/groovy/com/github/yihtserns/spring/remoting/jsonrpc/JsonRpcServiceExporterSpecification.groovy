@@ -222,6 +222,18 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "mapCollectionValue"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
     }
 
+    def "supported empty object params"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "returnObjectArg",
+                params: [:]))
+
+        then:
+        response.error == null
+        response.result == new DataTypeObject().properties.tap { it.remove("class") }
+    }
+
     def "unsupported object params data types"() {
         when:
         def response = callCalc(new Request(
