@@ -15,6 +15,8 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -40,6 +42,7 @@ import org.springframework.web.HttpRequestHandler;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.DataBindingException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -97,47 +100,57 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
     public void handleRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
         ServletInputStream inputStream = httpRequest.getInputStream();
 
-        JsonRpcRequest request = objectMapper.readValue(inputStream, JsonRpcRequest.class);
+        JsonRpcRequest request = null;
+        Method method = null;
+        boolean returnResponse = true;
         JsonRpcResponse response = new JsonRpcResponse();
-        response.setId(request.getId());
-
-        Method method = name2Method.get(request.getMethod());
-        boolean returnResponse = !StringUtils.isEmpty(request.getId());
 
         try {
-            if (method == null) {
-                response.setError(JsonRpcResponse.Error.methodNotFound());
-            } else {
-                if (request.getParams() instanceof List) {
-                    executeArrayParamsMethod(request, response, method);
-                } else if (request.getParams() instanceof Map) {
-                    executeObjectParamsMethod(request, response, method);
+            request = objectMapper.readValue(inputStream, JsonRpcRequest.class);
+            response.setId(request.getId());
+
+            method = name2Method.get(request.getMethod());
+            returnResponse = !StringUtils.isEmpty(request.getId());
+        } catch (StreamReadException ex) {
+            response.setError(JsonRpcResponse.Error.parseError());
+        }
+
+        if (request != null) {
+            try {
+                if (method == null) {
+                    response.setError(JsonRpcResponse.Error.methodNotFound());
                 } else {
-                    returnResponse = true;
-                    response.setError(JsonRpcResponse.Error.invalidRequest());
+                    if (request.getParams() instanceof List) {
+                        executeArrayParamsMethod(request, response, method);
+                    } else if (request.getParams() instanceof Map) {
+                        executeObjectParamsMethod(request, response, method);
+                    } else {
+                        returnResponse = true;
+                        response.setError(JsonRpcResponse.Error.invalidRequest());
+                    }
                 }
-            }
-        } catch (IllegalArgumentException ex) {
-            log.debug("Error when trying to call method: {}", request.getMethod(), ex);
-            response.setError(JsonRpcResponse.Error.invalidParams());
-        } catch (InvocationTargetException ex) {
-            if (conversionService.canConvert(ex.getCause().getClass(), JsonRpcResponse.Error.class)) {
-                response.setError(conversionService.convert(ex.getCause(), JsonRpcResponse.Error.class));
+            } catch (IllegalArgumentException ex) {
+                log.debug("Error when trying to call method: {}", request.getMethod(), ex);
+                response.setError(JsonRpcResponse.Error.invalidParams());
+            } catch (InvocationTargetException ex) {
+                if (conversionService.canConvert(ex.getCause().getClass(), JsonRpcResponse.Error.class)) {
+                    response.setError(conversionService.convert(ex.getCause(), JsonRpcResponse.Error.class));
 
-                if (response.getError().getCode() <= -32000 && response.getError().getCode() >= -32768) {
-                    log.error("Exception [{}] was converted into Error object using a reserved error code: {}",
-                            ex.getCause(),
-                            response.getError().getCode());
+                    if (response.getError().getCode() <= -32000 && response.getError().getCode() >= -32768) {
+                        log.error("Exception [{}] was converted into Error object using a reserved error code: {}",
+                                ex.getCause(),
+                                response.getError().getCode());
 
+                        response.setError(JsonRpcResponse.Error.internalError());
+                    }
+                } else {
+                    log.error("Error thrown by method: {}", method, ex.getCause());
                     response.setError(JsonRpcResponse.Error.internalError());
                 }
-            } else {
-                log.error("Error thrown by method: {}", method, ex.getCause());
+            } catch (IllegalAccessException | RuntimeException ex) {
+                log.error("Failed to call method: {}", request.getMethod(), ex);
                 response.setError(JsonRpcResponse.Error.internalError());
             }
-        } catch (IllegalAccessException | RuntimeException ex) {
-            log.error("Failed to call method: {}", request.getMethod(), ex);
-            response.setError(JsonRpcResponse.Error.internalError());
         }
 
         if (!returnResponse) {

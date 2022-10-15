@@ -55,5 +55,9 @@ public class JsonRpcResponse {
         public static Error invalidRequest() {
             return new Error(-32600, "Invalid Request");
         }
+
+        public static Error parseError() {
+            return new Error(-32700, "Parse error");
+        }
     }
 }

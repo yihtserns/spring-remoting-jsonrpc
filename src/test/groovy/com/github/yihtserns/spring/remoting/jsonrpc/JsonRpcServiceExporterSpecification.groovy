@@ -288,6 +288,16 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
+    def "should fail with parse error when the request json is invalid"() {
+        when:
+        def response = requestCalc('{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]')
+
+        then:
+        response.body.result == null
+        response.body.error.code == -32700
+        response.body.error.message == "Parse error"
+    }
+
     def "should fail with invalid request when params data type is incorrect"() {
         when:
         def response = callCalc(new Request(
@@ -369,6 +379,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should return error when the request is incorrect, even if it does not have an id"() {
         expect:
+        with(requestCalc('{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]')) {
+            body.id == null
+            body.error.code == -32700
+            body.error.message == "Parse error"
+        }
         with(requestCalc(new Request(method: "returnStringArg", params: "invalid params, neither list nor object"))) {
             body.id == null
             body.error.code == -32600
