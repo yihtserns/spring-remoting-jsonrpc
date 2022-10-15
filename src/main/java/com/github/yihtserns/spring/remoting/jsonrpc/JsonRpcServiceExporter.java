@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.ConversionNotSupportedException;
+import org.springframework.beans.NotWritablePropertyException;
 import org.springframework.beans.NullValueInNestedPathException;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.SimpleTypeConverter;
@@ -204,13 +205,12 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(beanArg);
             bean.registerCustomEditor(OffsetDateTime.class, new OffsetDateTimeEditor());
 
-            // TODO: When property not found
             propertyName2Value.forEach(bean::setPropertyValue);
 
             response.setResult(method.invoke(service, beanArg));
         } catch (IllegalAccessException | InstantiationException ex) {
             throw new IllegalArgumentException("TODO: Return error");
-        } catch (ConversionNotSupportedException | NullValueInNestedPathException ex) {
+        } catch (NotWritablePropertyException | ConversionNotSupportedException | NullValueInNestedPathException ex) {
             throw new IllegalArgumentException(ex);
         }
     }

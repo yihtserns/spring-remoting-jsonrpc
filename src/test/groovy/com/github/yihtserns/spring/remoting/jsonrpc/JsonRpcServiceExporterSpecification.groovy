@@ -252,7 +252,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "objectValue.stringValue" | "Expected Nested Param Value"
     }
 
-    def "should fail when params contains incompatible value"() {
+    def "should fail with invalid params error when array params contains incompatible value"() {
         when:
         def response = callCalc(new Request(
                 id: UUID.randomUUID(),
@@ -279,6 +279,19 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnOffsetDateTimeListArg"       | ["2020"]
         "returnOffsetDateTimeSetArg"        | ["2020"]
         "returnOffsetDateTimeCollectionArg" | ["2020"]
+    }
+
+    def "should fail with invalid params error when object params contains incorrect parameter name"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "returnObjectArg",
+                params: ["nonExistentParam": 1]))
+
+        then:
+        response.result == null
+        response.error.code == -32602
+        response.error.message == "Invalid params"
     }
 
     def "should fail with internal error when method throws exception"() {
