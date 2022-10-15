@@ -102,6 +102,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
         response.setId(request.getId());
 
         Method method = name2Method.get(request.getMethod());
+        boolean returnResponse = !StringUtils.isEmpty(request.getId());
 
         try {
             if (method == null) {
@@ -112,7 +113,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
                 } else if (request.getParams() instanceof Map) {
                     executeObjectParamsMethod(request, response, method);
                 } else {
-                    throw new IllegalArgumentException("TODO: Return error");
+                    returnResponse = true;
+                    response.setError(JsonRpcResponse.Error.invalidRequest());
                 }
             }
         } catch (IllegalArgumentException ex) {
@@ -138,7 +140,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             response.setError(JsonRpcResponse.Error.internalError());
         }
 
-        if (StringUtils.isEmpty(request.getId())) {
+        if (!returnResponse) {
             httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
         } else {
             httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);

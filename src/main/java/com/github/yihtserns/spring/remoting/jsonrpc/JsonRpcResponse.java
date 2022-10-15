@@ -51,5 +51,9 @@ public class JsonRpcResponse {
         public static Error internalError() {
             return new Error(-32603, "Internal error");
         }
+
+        public static Error invalidRequest() {
+            return new Error(-32600, "Invalid Request");
+        }
     }
 }

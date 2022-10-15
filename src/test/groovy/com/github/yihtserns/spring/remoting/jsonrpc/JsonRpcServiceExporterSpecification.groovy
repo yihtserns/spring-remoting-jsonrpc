@@ -288,6 +288,19 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
+    def "should fail with invalid request when params data type is incorrect"() {
+        when:
+        def response = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "returnStringArg",
+                params: "neither list nor object"))
+
+        then:
+        response.result == null
+        response.error.code == -32600
+        response.error.message == "Invalid Request"
+    }
+
     def "can use custom converter to transform a specific exception into error object"() {
         when:
         def responseWithCustomErrorObject = callCalc(new Request(
@@ -354,6 +367,15 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "nonExistentMethod" | []
     }
 
+    def "should return error when the request is incorrect, even if it does not have an id"() {
+        expect:
+        with(requestCalc(new Request(method: "returnStringArg", params: "invalid params, neither list nor object"))) {
+            body.id == null
+            body.error.code == -32600
+            body.error.message == "Invalid Request"
+        }
+    }
+
     def "does not support overloaded method"() {
         when:
         def exporter = new JsonRpcServiceExporter(
@@ -403,7 +425,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 Map)
     }
 
-    private ResponseEntity<Map> requestCalc(Request request) {
+    private ResponseEntity<Map> requestCalc(Object request) {
         return restTemplate.exchange(
                 "http://localhost:${port}/calc",
                 HttpMethod.POST,
