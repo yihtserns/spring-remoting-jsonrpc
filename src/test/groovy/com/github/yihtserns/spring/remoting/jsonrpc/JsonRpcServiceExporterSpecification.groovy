@@ -1,5 +1,6 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
+
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -358,6 +359,19 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
+    def "can use anonymous class converter to transform a specific exception into error object"() {
+        when:
+        def responseWithCustomErrorObject = callCalc(new Request(
+                id: UUID.randomUUID(),
+                method: "throwHandledIllegalArgumentException",
+                params: []))
+
+        then:
+        responseWithCustomErrorObject.result == null
+        responseWithCustomErrorObject.error.code == -1
+        responseWithCustomErrorObject.error.message == "Handled"
+    }
+
     def "should return internal error if custom converter produces error object that uses reserved error code"() {
         when:
         def responseWithCustomErrorObject = callCalc(new Request(
@@ -493,6 +507,16 @@ class JsonRpcServiceExporterSpecification extends Specification {
         CustomApplicationExceptionToError customApplicationExceptionToError() {
             return new CustomApplicationExceptionToError()
         }
+
+        @Bean
+        Converter<IllegalArgumentException, JsonRpcResponse.Error> illegalArgumentExceptionToError() {
+            return new Converter<IllegalArgumentException, JsonRpcResponse.Error>() {
+                @Override
+                JsonRpcResponse.Error convert(IllegalArgumentException ex) {
+                    return new JsonRpcResponse.Error(-1, ex.message)
+                }
+            }
+        }
     }
 
     interface CalcService {
@@ -600,6 +624,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
         void throwError()
 
         void throwCustomApplicationException(int errorCode) throws CustomApplicationException
+
+        void throwHandledIllegalArgumentException()
     }
 
     static class CalcServiceImpl implements CalcService {
@@ -915,6 +941,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Override
         void throwCustomApplicationException(int errorCode) throws CustomApplicationException {
             throw new CustomApplicationException(errorCode)
+        }
+
+        @Override
+        void throwHandledIllegalArgumentException() {
+            throw new IllegalArgumentException("Handled")
         }
     }
 
