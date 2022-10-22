@@ -16,7 +16,6 @@
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -43,7 +42,6 @@ import org.springframework.web.HttpRequestHandler;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.DataBindingException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -70,7 +68,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.conversionService = beanFactory.getBean(ConversionService.class);
+        this.conversionService = beanFactory.getBeanProvider(ConversionService.class)
+                .getIfAvailable(() -> NoOpConversionService.INSTANCE);
     }
 
     @Override
