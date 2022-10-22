@@ -8,6 +8,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -491,14 +492,10 @@ class JsonRpcServiceExporterSpecification extends Specification {
     static class Application {
 
         @Bean("/calc")
-        JsonRpcServiceExporter calcServiceJsonRpcServiceExporter(Collection<ThrowableConverter> throwableConverters) {
-            def exporter = new JsonRpcServiceExporter(
+        JsonRpcServiceExporter calcServiceJsonRpcServiceExporter() {
+            return new JsonRpcServiceExporter(
                     serviceInterface: CalcService,
                     service: calcService())
-
-            throwableConverters.each { exporter.addThrowableConverter(it) }
-
-            return exporter
         }
 
         @Bean
@@ -507,13 +504,13 @@ class JsonRpcServiceExporterSpecification extends Specification {
         }
 
         @Bean
-        CustomApplicationExceptionConverter customApplicationExceptionConverter() {
-            return new CustomApplicationExceptionConverter()
+        CustomApplicationExceptionToError customApplicationExceptionToError() {
+            return new CustomApplicationExceptionToError()
         }
 
         @Bean
-        ThrowableConverter<IllegalArgumentException> illegalArgumentExceptionConverter() {
-            return new ThrowableConverter<IllegalArgumentException>() {
+        Converter<IllegalArgumentException, JsonRpcResponse.Error> illegalArgumentExceptionToError() {
+            return new Converter<IllegalArgumentException, JsonRpcResponse.Error>() {
                 @Override
                 JsonRpcResponse.Error convert(IllegalArgumentException ex) {
                     return new JsonRpcResponse.Error(-1, ex.message)
@@ -1046,7 +1043,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         }
     }
 
-    static class CustomApplicationExceptionConverter implements ThrowableConverter<CustomApplicationException> {
+    static class CustomApplicationExceptionToError implements Converter<CustomApplicationException, JsonRpcResponse.Error> {
 
         @Override
         JsonRpcResponse.Error convert(CustomApplicationException ex) {

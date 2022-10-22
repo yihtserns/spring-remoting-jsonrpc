@@ -16,20 +16,25 @@
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.ConversionNotSupportedException;
 import org.springframework.beans.NotWritablePropertyException;
 import org.springframework.beans.NullValueInNestedPathException;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
@@ -38,12 +43,11 @@ import org.springframework.web.HttpRequestHandler;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.DataBindingException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,37 +55,22 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingBean {
+public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAware, InitializingBean {
 
     private ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private Map<String, Method> name2Method = new HashMap<>();
-    private Map<Class<? extends Throwable>, ThrowableConverter<Throwable>> throwableType2Converter = new HashMap<>();
 
     @Setter
     private Class<?> serviceInterface;
     @Setter
     private Object service;
+    private ConversionService conversionService;
 
-    public void addThrowableConverter(ThrowableConverter<Throwable> exceptionConverter) {
-        for (Type type : exceptionConverter.getClass().getGenericInterfaces()) {
-            if (!(type instanceof ParameterizedType)) {
-                continue;
-            }
-
-            ParameterizedType pType = (ParameterizedType) type;
-            if (!pType.getRawType().equals(ThrowableConverter.class)) {
-                continue;
-            }
-
-            Class<? extends Throwable> throwableType = (Class) pType.getActualTypeArguments()[0];
-            if (throwableType2Converter.containsKey(throwableType)) {
-                throw new IllegalArgumentException("TODO:");
-            }
-
-            throwableType2Converter.put(throwableType, exceptionConverter);
-        }
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.conversionService = beanFactory.getBean(ConversionService.class);
     }
 
     @Override
@@ -145,9 +134,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                 log.debug("Error when trying to call method: {}", request.getMethod(), ex);
                 response.setError(JsonRpcResponse.Error.invalidParams());
             } catch (InvocationTargetException ex) {
-                ThrowableConverter<Throwable> exceptionConverter = throwableType2Converter.get(ex.getCause().getClass());
-                if (exceptionConverter != null) {
-                    response.setError(exceptionConverter.convert(ex.getCause()));
+                if (conversionService.canConvert(ex.getCause().getClass(), JsonRpcResponse.Error.class)) {
+                    response.setError(conversionService.convert(ex.getCause(), JsonRpcResponse.Error.class));
 
                     if (response.getError().getCode() <= -32000 && response.getError().getCode() >= -32768) {
                         log.error("Exception [{}] was converted into Error object using a reserved error code: {}",
