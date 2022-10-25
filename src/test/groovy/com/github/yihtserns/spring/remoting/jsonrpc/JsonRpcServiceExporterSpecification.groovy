@@ -90,69 +90,60 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result == expectedReturnValue
 
         where:
-        method                              | paramValue                                   | expectedReturnValue
-        "returnStringArg"                   | "Expected Param Value"                       | paramValue
-        "returnStringArrayArg"              | ["Expected Param Value"]                     | paramValue
-        "returnStringListArg"               | ["Expected Param Value"]                     | paramValue
-        "returnStringSetArg"                | ["Expected Param Value"]                     | paramValue
-        "returnStringCollectionArg"         | ["Expected Param Value"]                     | paramValue
+        method                              | paramValue                                      | expectedReturnValue
+        "returnStringArg"                   | "Expected Param Value"                          | paramValue
+        "returnStringArrayArg"              | ["Expected Param Value"]                        | paramValue
+        "returnStringListArg"               | ["Expected Param Value"]                        | paramValue
+        "returnStringSetArg"                | ["Expected Param Value"]                        | paramValue
+        "returnStringCollectionArg"         | ["Expected Param Value"]                        | paramValue
 
-        "returnBooleanArg"                  | true                                         | paramValue
-        "returnBooleanWrapperArg"           | true                                         | paramValue
-        "returnBooleanArrayArg"             | [true, false, true]                          | paramValue
-        "returnBooleanWrapperArrayArg"      | [true, false, true]                          | paramValue
-        "returnBooleanListArg"              | [true, false, true]                          | paramValue
-        "returnBooleanSetArg"               | [true, false, true]                          | [true, false]
-        "returnBooleanCollectionArg"        | [true, false, true]                          | paramValue
+        "returnBooleanArg"                  | true                                            | paramValue
+        "returnBooleanWrapperArg"           | true                                            | paramValue
+        "returnBooleanArrayArg"             | [true, false, true]                             | paramValue
+        "returnBooleanWrapperArrayArg"      | [true, false, true]                             | paramValue
+        "returnBooleanListArg"              | [true, false, true]                             | paramValue
+        "returnBooleanSetArg"               | [true, false, true]                             | ([true, false] as HashSet).toList()
+        "returnBooleanCollectionArg"        | [true, false, true]                             | paramValue
 
-        "returnDoubleArg"                   | 1.234                                        | paramValue
-        "returnDoubleWrapperArg"            | 1.234                                        | paramValue
-        "returnDoubleArrayArg"              | [1.234]                                      | paramValue
-        "returnDoubleWrapperArrayArg"       | [1.234]                                      | paramValue
-        "returnDoubleListArg"               | [1.234]                                      | paramValue
-        "returnDoubleSetArg"                | [1.234]                                      | paramValue
-        "returnDoubleCollectionArg"         | [1.234]                                      | paramValue
+        "returnDoubleArg"                   | 1.234                                           | paramValue
+        "returnDoubleWrapperArg"            | 1.234                                           | paramValue
+        "returnDoubleArrayArg"              | [1.234]                                         | paramValue
+        "returnDoubleWrapperArrayArg"       | [1.234]                                         | paramValue
+        "returnDoubleListArg"               | [1.234]                                         | paramValue
+        "returnDoubleSetArg"                | [1.234]                                         | paramValue
+        "returnDoubleCollectionArg"         | [1.234]                                         | paramValue
 
-        // String-to-X auto-conversion
-        "returnDoubleArg"                   | "1.234"                                      | 1.234
-        "returnDoubleWrapperArg"            | "1.234"                                      | 1.234
-        "returnDoubleArrayArg"              | ["1.234"]                                    | [1.234]
-        "returnDoubleWrapperArrayArg"       | ["1.234"]                                    | [1.234]
-        "returnDoubleListArg"               | ["1.234"]                                    | [1.234]
-        "returnDoubleSetArg"                | ["1.234"]                                    | [1.234]
-        "returnDoubleCollectionArg"         | ["1.234"]                                    | [1.234]
+        "returnFloatArg"                    | 1.234                                           | paramValue
+        "returnFloatWrapperArg"             | 1.234                                           | paramValue
+        "returnFloatArrayArg"               | [1.234]                                         | paramValue
+        "returnFloatWrapperArrayArg"        | [1.234]                                         | paramValue
+        "returnFloatListArg"                | [1.234]                                         | paramValue
+        "returnFloatSetArg"                 | [1.234]                                         | paramValue
+        "returnFloatCollectionArg"          | [1.234]                                         | paramValue
 
-        "returnFloatArg"                    | 1.234                                        | paramValue
-        "returnFloatWrapperArg"             | 1.234                                        | paramValue
-        "returnFloatArrayArg"               | [1.234]                                      | paramValue
-        "returnFloatWrapperArrayArg"        | [1.234]                                      | paramValue
-        "returnFloatListArg"                | [1.234]                                      | paramValue
-        "returnFloatSetArg"                 | [1.234]                                      | paramValue
-        "returnFloatCollectionArg"          | [1.234]                                      | paramValue
+        "returnBigDecimalArg"               | 1.234                                           | paramValue
+        "returnBigDecimalArrayArg"          | [1.234]                                         | paramValue
+        "returnBigDecimalListArg"           | [1.234]                                         | paramValue
+        "returnBigDecimalSetArg"            | [1.234]                                         | paramValue
+        "returnBigDecimalCollectionArg"     | [1.234]                                         | paramValue
 
-        "returnBigDecimalArg"               | 1.234                                        | paramValue
-        "returnBigDecimalArrayArg"          | [1.234]                                      | paramValue
-        "returnBigDecimalListArg"           | [1.234]                                      | paramValue
-        "returnBigDecimalSetArg"            | [1.234]                                      | paramValue
-        "returnBigDecimalCollectionArg"     | [1.234]                                      | paramValue
+        "returnEnumArg"                     | TimeUnit.MINUTES.name()                         | paramValue
+        "returnEnumArrayArg"                | [TimeUnit.MINUTES.name()]                       | paramValue
+        "returnEnumListArg"                 | [TimeUnit.MINUTES.name()]                       | paramValue
+        "returnEnumSetArg"                  | [TimeUnit.MINUTES.name()]                       | paramValue
+        "returnEnumCollectionArg"           | [TimeUnit.MINUTES.name()]                       | paramValue
 
-        "returnEnumArg"                     | TimeUnit.MINUTES.name()                      | paramValue
-        "returnEnumArrayArg"                | [TimeUnit.MINUTES.name()]                    | paramValue
-        "returnEnumListArg"                 | [TimeUnit.MINUTES.name()]                    | paramValue
-        "returnEnumSetArg"                  | [TimeUnit.MINUTES.name()]                    | paramValue
-        "returnEnumCollectionArg"           | [TimeUnit.MINUTES.name()]                    | paramValue
+        "returnOffsetDateTimeArg"           | OffsetDateTime.now(UTC).format(ISO_DATE_TIME)   | paramValue
+        "returnOffsetDateTimeArrayArg"      | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "returnOffsetDateTimeListArg"       | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "returnOffsetDateTimeSetArg"        | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "returnOffsetDateTimeCollectionArg" | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
 
-        "returnOffsetDateTimeArg"           | OffsetDateTime.now().format(ISO_DATE_TIME)   | paramValue
-        "returnOffsetDateTimeArrayArg"      | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
-        "returnOffsetDateTimeListArg"       | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
-        "returnOffsetDateTimeSetArg"        | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
-        "returnOffsetDateTimeCollectionArg" | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
-
-        "returnMapArg"                      | ["Key 1": 1, "Key 2": 2]                     | paramValue
-        "returnMapArrayArg"                 | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
-        "returnMapListArg"                  | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
-        "returnMapSetArg"                   | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
-        "returnMapCollectionArg"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
+        "returnMapArg"                      | ["Key 1": 1, "Key 2": 2]                        | paramValue
+        "returnMapArrayArg"                 | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
+        "returnMapListArg"                  | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
+        "returnMapSetArg"                   | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | (paramValue as HashSet).toList()
+        "returnMapCollectionArg"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
     }
 
     def "supported object params data types, via Jackson JSON"() {
@@ -257,11 +248,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnDoubleSetArg"                | ["abc"]
         "returnDoubleCollectionArg"         | ["abc"]
 
-        "returnOffsetDateTimeArg"           | "2020"
-        "returnOffsetDateTimeArrayArg"      | ["2020"]
-        "returnOffsetDateTimeListArg"       | ["2020"]
-        "returnOffsetDateTimeSetArg"        | ["2020"]
-        "returnOffsetDateTimeCollectionArg" | ["2020"]
+        "returnOffsetDateTimeArg"           | "abc"
+        "returnOffsetDateTimeArrayArg"      | ["abc"]
+        "returnOffsetDateTimeListArg"       | ["abc"]
+        "returnOffsetDateTimeSetArg"        | ["abc"]
+        "returnOffsetDateTimeCollectionArg" | ["abc"]
     }
 
     def "should fail with invalid params error when object params contains incorrect parameter name"() {

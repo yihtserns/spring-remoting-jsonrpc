@@ -17,18 +17,16 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.SimpleTypeConverter;
-import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.MethodParameter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -42,7 +40,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -157,8 +154,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
         }
     }
 
-    private void executeArrayParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException, JsonProcessingException {
-        List<Object> requestParameters = objectMapper.treeToValue(request.getParams(), List.class);
+    private void executeArrayParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException {
+        JsonNode requestParameters = request.getParams();
         Parameter[] methodParameters = method.getParameters();
 
         if (requestParameters.size() != methodParameters.length) {
@@ -168,24 +165,22 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             return;
         }
 
-        SimpleTypeConverter typeConverter = new SimpleTypeConverter();
-        typeConverter.registerCustomEditor(OffsetDateTime.class, null, new OffsetDateTimeEditor());
         try {
             List<Object> params = new ArrayList<>();
             for (int i = 0; i < methodParameters.length; i++) {
                 Parameter methodParameter = methodParameters[i];
-                Object rawMethodArgument = requestParameters.get(i);
+                JsonNode param = request.getParams().get(i);
 
-                Object methodArgument = typeConverter.convertIfNecessary(
-                        rawMethodArgument,
-                        methodParameter.getType(),
-                        MethodParameter.forParameter(methodParameter));
+                // TODO: Can support method parameter annotation e.g. @JsonFormat?
+                Object methodArgument = objectMapper.treeToValue(
+                        param,
+                        objectMapper.getTypeFactory().constructType(methodParameter.getParameterizedType()));
 
                 params.add(methodArgument);
             }
 
             response.setResult(method.invoke(service, params.toArray()));
-        } catch (TypeMismatchException ex) {
+        } catch (JsonProcessingException ex) {
             // TODO: Better error message & error response
             log.error("Failed to convert params entry type to method argument type", ex);
             response.setError(JsonRpcResponse.Error.invalidParams());
