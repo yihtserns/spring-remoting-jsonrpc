@@ -15,6 +15,7 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,5 +26,5 @@ public class JsonRpcRequest {
     private String jsonrpc;
     private String id;
     private String method;
-    private Object params;
+    private JsonNode params;
 }

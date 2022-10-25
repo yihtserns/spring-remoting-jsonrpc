@@ -15,18 +15,14 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.ConversionNotSupportedException;
-import org.springframework.beans.NotWritablePropertyException;
-import org.springframework.beans.NullValueInNestedPathException;
-import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.BeanFactory;
@@ -97,7 +93,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
     }
 
     @Override
-    public void handleRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
+    public void handleRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException { // TODO: Handle IOException
         ServletInputStream inputStream = httpRequest.getInputStream();
 
         JsonRpcRequest request = null;
@@ -120,9 +116,9 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
                 if (method == null) {
                     response.setError(JsonRpcResponse.Error.methodNotFound());
                 } else {
-                    if (request.getParams() instanceof List) {
+                    if (request.getParams().isArray()) {
                         executeArrayParamsMethod(request, response, method);
-                    } else if (request.getParams() instanceof Map) {
+                    } else if (request.getParams().isObject()) {
                         executeObjectParamsMethod(request, response, method);
                     } else {
                         returnResponse = true;
@@ -161,8 +157,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
         }
     }
 
-    private void executeArrayParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException {
-        List<Object> requestParameters = (List) request.getParams();
+    private void executeArrayParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException, JsonProcessingException {
+        List<Object> requestParameters = objectMapper.treeToValue(request.getParams(), List.class);
         Parameter[] methodParameters = method.getParameters();
 
         if (requestParameters.size() != methodParameters.length) {
@@ -197,18 +193,12 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
     }
 
     private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException, IllegalAccessException, InstantiationException {
-
+        // TODO: param count != 1 --> throw
         try {
-            Map<String, Object> propertyName2Value = (Map) request.getParams();
-
-            Object beanArg = method.getParameters()[0].getType().newInstance();
-            BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(beanArg);
-            bean.registerCustomEditor(OffsetDateTime.class, new OffsetDateTimeEditor());
-
-            propertyName2Value.forEach(bean::setPropertyValue);
+            Object beanArg = objectMapper.treeToValue(request.getParams(), method.getParameterTypes()[0]);
 
             response.setResult(method.invoke(service, beanArg));
-        } catch (NotWritablePropertyException | ConversionNotSupportedException | NullValueInNestedPathException ex) {
+        } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException(ex);
         }
     }

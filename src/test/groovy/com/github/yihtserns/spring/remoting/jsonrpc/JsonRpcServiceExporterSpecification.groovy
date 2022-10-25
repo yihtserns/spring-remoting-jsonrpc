@@ -1,6 +1,5 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -20,6 +19,7 @@ import spock.lang.Specification
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
+import static java.time.ZoneOffset.UTC
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -155,7 +155,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnMapCollectionArg"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
     }
 
-    def "supported object params data types"() {
+    def "supported object params data types, via Jackson JSON"() {
         when:
         def response = callCalc(new Request(
                 id: UUID.randomUUID(),
@@ -167,60 +167,60 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result[paramName] == expectedReturnValue
 
         where:
-        paramName                       | paramValue                                   | expectedReturnValue
-        "stringValue"                   | "Expected Param Value"                       | paramValue
-        "stringArrayValue"              | ["Expected Param Value"]                     | paramValue
-        "stringListValue"               | ["Expected Param Value"]                     | paramValue
-        "stringSetValue"                | ["Expected Param Value"]                     | paramValue
-        "stringCollectionValue"         | ["Expected Param Value"]                     | paramValue
+        paramName                       | paramValue                                      | expectedReturnValue
+        "stringValue"                   | "Expected Param Value"                          | paramValue
+        "stringArrayValue"              | ["Expected Param Value"]                        | paramValue
+        "stringListValue"               | ["Expected Param Value"]                        | paramValue
+        "stringSetValue"                | ["Expected Param Value"]                        | paramValue
+        "stringCollectionValue"         | ["Expected Param Value"]                        | paramValue
 
-        "booleanValue"                  | true                                         | paramValue
-        "booleanWrapperValue"           | true                                         | paramValue
-        "booleanArrayValue"             | [true, false, true]                          | paramValue
-        "booleanWrapperArrayValue"      | [true, false, true]                          | paramValue
-        "booleanListValue"              | [true, false, true]                          | paramValue
-        "booleanSetValue"               | [true, false, true]                          | [true, false]
-        "booleanCollectionValue"        | [true, false, true]                          | paramValue
+        "booleanValue"                  | true                                            | paramValue
+        "booleanWrapperValue"           | true                                            | paramValue
+        "booleanArrayValue"             | [true, false, true]                             | paramValue
+        "booleanWrapperArrayValue"      | [true, false, true]                             | paramValue
+        "booleanListValue"              | [true, false, true]                             | paramValue
+        "booleanSetValue"               | [true, false, true]                             | ([true, false] as HashSet).toList()
+        "booleanCollectionValue"        | [true, false, true]                             | paramValue
 
-        "doubleValue"                   | 1.234                                        | paramValue
-        "doubleWrapperValue"            | 1.234                                        | paramValue
-        "doubleArrayValue"              | [1.234]                                      | paramValue
-        "doubleWrapperArrayValue"       | [1.234]                                      | paramValue
-        "doubleListValue"               | [1.234]                                      | paramValue
-        "doubleSetValue"                | [1.234]                                      | paramValue
-        "doubleCollectionValue"         | [1.234]                                      | paramValue
+        "doubleValue"                   | 1.234                                           | paramValue
+        "doubleWrapperValue"            | 1.234                                           | paramValue
+        "doubleArrayValue"              | [1.234]                                         | paramValue
+        "doubleWrapperArrayValue"       | [1.234]                                         | paramValue
+        "doubleListValue"               | [1.234]                                         | paramValue
+        "doubleSetValue"                | [1.234]                                         | paramValue
+        "doubleCollectionValue"         | [1.234]                                         | paramValue
 
-        "floatValue"                    | 1.234                                        | paramValue
-        "floatWrapperValue"             | 1.234                                        | paramValue
-        "floatArrayValue"               | [1.234]                                      | paramValue
-        "floatWrapperArrayValue"        | [1.234]                                      | paramValue
-        "floatListValue"                | [1.234]                                      | paramValue
-        "floatSetValue"                 | [1.234]                                      | paramValue
-        "floatCollectionValue"          | [1.234]                                      | paramValue
+        "floatValue"                    | 1.234                                           | paramValue
+        "floatWrapperValue"             | 1.234                                           | paramValue
+        "floatArrayValue"               | [1.234]                                         | paramValue
+        "floatWrapperArrayValue"        | [1.234]                                         | paramValue
+        "floatListValue"                | [1.234]                                         | paramValue
+        "floatSetValue"                 | [1.234]                                         | paramValue
+        "floatCollectionValue"          | [1.234]                                         | paramValue
 
-        "bigDecimalValue"               | 1.234                                        | paramValue
-        "bigDecimalArrayValue"          | [1.234]                                      | paramValue
-        "bigDecimalListValue"           | [1.234]                                      | paramValue
-        "bigDecimalSetValue"            | [1.234]                                      | paramValue
-        "bigDecimalCollectionValue"     | [1.234]                                      | paramValue
+        "bigDecimalValue"               | 1.234                                           | paramValue
+        "bigDecimalArrayValue"          | [1.234]                                         | paramValue
+        "bigDecimalListValue"           | [1.234]                                         | paramValue
+        "bigDecimalSetValue"            | [1.234]                                         | paramValue
+        "bigDecimalCollectionValue"     | [1.234]                                         | paramValue
 
-        "enumValue"                     | TimeUnit.MINUTES.name()                      | paramValue
-        "enumArrayValue"                | [TimeUnit.MINUTES.name()]                    | paramValue
-        "enumListValue"                 | [TimeUnit.MINUTES.name()]                    | paramValue
-        "enumSetValue"                  | [TimeUnit.MINUTES.name()]                    | paramValue
-        "enumCollectionValue"           | [TimeUnit.MINUTES.name()]                    | paramValue
+        "enumValue"                     | TimeUnit.MINUTES.name()                         | paramValue
+        "enumArrayValue"                | [TimeUnit.MINUTES.name()]                       | paramValue
+        "enumListValue"                 | [TimeUnit.MINUTES.name()]                       | paramValue
+        "enumSetValue"                  | [TimeUnit.MINUTES.name()]                       | paramValue
+        "enumCollectionValue"           | [TimeUnit.MINUTES.name()]                       | paramValue
 
-        "offsetDateTimeValue"           | OffsetDateTime.now().format(ISO_DATE_TIME)   | paramValue
-        "offsetDateTimeArrayValue"      | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
-        "offsetDateTimeListValue"       | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
-        "offsetDateTimeSetValue"        | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
-        "offsetDateTimeCollectionValue" | [OffsetDateTime.now().format(ISO_DATE_TIME)] | paramValue
+        "offsetDateTimeValue"           | OffsetDateTime.now(UTC).format(ISO_DATE_TIME)   | paramValue
+        "offsetDateTimeArrayValue"      | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "offsetDateTimeListValue"       | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "offsetDateTimeSetValue"        | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "offsetDateTimeCollectionValue" | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
 
-        "mapValue"                      | ["Key 1": 1, "Key 2": 2]                     | paramValue
-        "mapArrayValue"                 | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
-        "mapListValue"                  | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
-        "mapSetValue"                   | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
-        "mapCollectionValue"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]     | paramValue
+        "mapValue"                      | ["Key 1": 1, "Key 2": 2]                        | paramValue
+        "mapArrayValue"                 | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
+        "mapListValue"                  | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
+        "mapSetValue"                   | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | (paramValue as HashSet).toList()
+        "mapCollectionValue"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
     }
 
     def "supported empty object params"() {
@@ -233,24 +233,6 @@ class JsonRpcServiceExporterSpecification extends Specification {
         then:
         response.error == null
         response.result == new DataTypeObject().properties.tap { it.remove("class") }
-    }
-
-    def "unsupported object params data types"() {
-        when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "returnObjectArg",
-                params: [(paramName): paramValue]))
-
-        then:
-        response.result == null
-        response.error.code == -32602
-        response.error.message == "Invalid params"
-
-        where:
-        paramName                 | paramValue
-        "objectValue"             | [stringValue: "Expected Nested Param Value"]
-        "objectValue.stringValue" | "Expected Nested Param Value"
     }
 
     def "should fail with invalid params error when array params contains incompatible value"() {
