@@ -1,5 +1,6 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -133,6 +134,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnEnumSetArg"                  | [TimeUnit.MINUTES.name()]                       | paramValue
         "returnEnumCollectionArg"           | [TimeUnit.MINUTES.name()]                       | paramValue
 
+        // Supported by SpringBoot's ObjectMapper
         "returnOffsetDateTimeArg"           | OffsetDateTime.now(UTC).format(ISO_DATE_TIME)   | paramValue
         "returnOffsetDateTimeArrayArg"      | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
         "returnOffsetDateTimeListArg"       | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
@@ -201,6 +203,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "enumSetValue"                  | [TimeUnit.MINUTES.name()]                       | paramValue
         "enumCollectionValue"           | [TimeUnit.MINUTES.name()]                       | paramValue
 
+        // Supported by SpringBoot's ObjectMapper
         "offsetDateTimeValue"           | OffsetDateTime.now(UTC).format(ISO_DATE_TIME)   | paramValue
         "offsetDateTimeArrayValue"      | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
         "offsetDateTimeListValue"       | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
@@ -465,10 +468,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
     static class Application {
 
         @Bean("/calc")
-        JsonRpcServiceExporter calcServiceJsonRpcServiceExporter() {
+        JsonRpcServiceExporter calcServiceJsonRpcServiceExporter(ObjectMapper objectMapper) {
             return new JsonRpcServiceExporter(
                     serviceInterface: CalcService,
-                    service: calcService())
+                    service: calcService(),
+                    objectMapper: objectMapper)
         }
 
         @Bean

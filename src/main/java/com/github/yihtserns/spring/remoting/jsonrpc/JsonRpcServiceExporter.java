@@ -17,10 +17,11 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -48,15 +49,16 @@ import java.util.Map;
 @Slf4j
 public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAware, InitializingBean {
 
-    private ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private Map<String, Method> name2Method = new HashMap<>();
+    private ObjectReader objectReader;
+    private ObjectWriter objectWriter;
 
     @Setter
     private Class<?> serviceInterface;
     @Setter
     private Object service;
+    @Setter
+    private ObjectMapper objectMapper = new ObjectMapper();
     private ConversionService conversionService;
 
     @Override
@@ -81,6 +83,9 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
                     service.getClass().getName()));
         }
 
+        objectReader = objectMapper.reader(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectWriter = objectMapper.writer();
+
         for (Method method : serviceInterface.getMethods()) {
             if (name2Method.containsKey(method.getName())) {
                 throw new IllegalArgumentException("Duplicate method name is not supported: " + method.getName());
@@ -99,7 +104,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
         JsonRpcResponse response = new JsonRpcResponse();
 
         try {
-            request = objectMapper.readValue(inputStream, JsonRpcRequest.class);
+            request = objectReader.readValue(inputStream, JsonRpcRequest.class);
             response.setId(request.getId());
 
             method = name2Method.get(request.getMethod());
@@ -150,7 +155,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
         } else {
             httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            objectMapper.writeValue(httpResponse.getOutputStream(), response);
+            objectWriter.writeValue(httpResponse.getOutputStream(), response);
         }
     }
 
@@ -172,9 +177,9 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
                 JsonNode param = request.getParams().get(i);
 
                 // TODO: Can support method parameter annotation e.g. @JsonFormat?
-                Object methodArgument = objectMapper.treeToValue(
+                Object methodArgument = objectReader.treeToValue(
                         param,
-                        objectMapper.getTypeFactory().constructType(methodParameter.getParameterizedType()));
+                        objectReader.getTypeFactory().constructType(methodParameter.getParameterizedType()));
 
                 params.add(methodArgument);
             }
@@ -190,7 +195,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
     private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         // TODO: param count != 1 --> throw
         try {
-            Object beanArg = objectMapper.treeToValue(request.getParams(), method.getParameterTypes()[0]);
+            Object beanArg = objectReader.treeToValue(request.getParams(), method.getParameterTypes()[0]);
 
             response.setResult(method.invoke(service, beanArg));
         } catch (JsonProcessingException ex) {
