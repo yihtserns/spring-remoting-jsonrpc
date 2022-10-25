@@ -1,5 +1,6 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
+
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
@@ -27,19 +28,19 @@ class CalcServiceImpl implements CalcService {
 
     @Override
     List<String> returnStringListArg(List<String> value) {
-        value.each { assert it instanceof String }
+        value.each { assert it.getClass() == String }
         return value
     }
 
     @Override
     Set<String> returnStringSetArg(Set<String> value) {
-        value.each { assert it instanceof String }
+        value.each { assert it.getClass() == String }
         return value
     }
 
     @Override
     Collection<String> returnStringCollectionArg(Collection<String> value) {
-        value.each { assert it instanceof String }
+        value.each { assert it.getClass() == String }
         return value
     }
 
@@ -60,25 +61,25 @@ class CalcServiceImpl implements CalcService {
 
     @Override
     Boolean[] returnBooleanWrapperArrayArg(Boolean[] value) {
-        value.each { assert it instanceof Boolean }
+        value.each { assert it.getClass() == Boolean }
         return value
     }
 
     @Override
     List<Boolean> returnBooleanListArg(List<Boolean> value) {
-        value.each { assert it instanceof Boolean }
+        value.each { assert it.getClass() == Boolean }
         return value
     }
 
     @Override
     Set<Boolean> returnBooleanSetArg(Set<Boolean> value) {
-        value.each { assert it instanceof Boolean }
+        value.each { assert it.getClass() == Boolean }
         return value
     }
 
     @Override
     Collection<Boolean> returnBooleanCollectionArg(Collection<Boolean> value) {
-        value.each { assert it instanceof Boolean }
+        value.each { assert it.getClass() == Boolean }
         return value
     }
 
@@ -104,19 +105,19 @@ class CalcServiceImpl implements CalcService {
 
     @Override
     List<Double> returnDoubleListArg(List<Double> value) {
-        value.each { assert it instanceof Double }
+        value.each { assert it.getClass() == Double }
         return value
     }
 
     @Override
     Set<Double> returnDoubleSetArg(Set<Double> value) {
-        value.each { assert it instanceof Double }
+        value.each { assert it.getClass() == Double }
         return value
     }
 
     @Override
     Collection<Double> returnDoubleCollectionArg(Collection<Double> value) {
-        value.each { assert it instanceof Double }
+        value.each { assert it.getClass() == Double }
         return value
     }
 
@@ -142,19 +143,19 @@ class CalcServiceImpl implements CalcService {
 
     @Override
     List<Float> returnFloatListArg(List<Float> value) {
-        value.each { assert it instanceof Float }
+        value.each { assert it.getClass() == Float }
         return value
     }
 
     @Override
     Set<Float> returnFloatSetArg(Set<Float> value) {
-        value.each { assert it instanceof Float }
+        value.each { assert it.getClass() == Float }
         return value
     }
 
     @Override
     Collection<Float> returnFloatCollectionArg(Collection<Float> value) {
-        value.each { assert it instanceof Float }
+        value.each { assert it.getClass() == Float }
         return value
     }
 
@@ -170,19 +171,19 @@ class CalcServiceImpl implements CalcService {
 
     @Override
     List<BigDecimal> returnBigDecimalListArg(List<BigDecimal> value) {
-        value.each { assert it instanceof BigDecimal }
+        value.each { assert it.getClass() == BigDecimal }
         return value
     }
 
     @Override
     Set<BigDecimal> returnBigDecimalSetArg(Set<BigDecimal> value) {
-        value.each { assert it instanceof BigDecimal }
+        value.each { assert it.getClass() == BigDecimal }
         return value
     }
 
     @Override
     Collection<BigDecimal> returnBigDecimalCollectionArg(Collection<BigDecimal> value) {
-        value.each { assert it instanceof BigDecimal }
+        value.each { assert it.getClass() == BigDecimal }
         return value
     }
 
@@ -198,19 +199,19 @@ class CalcServiceImpl implements CalcService {
 
     @Override
     List<TimeUnit> returnEnumListArg(List<TimeUnit> value) {
-        value.each { assert it instanceof TimeUnit }
+        value.each { assert it.getDeclaringClass() == TimeUnit }
         return value
     }
 
     @Override
     Set<TimeUnit> returnEnumSetArg(Set<TimeUnit> value) {
-        value.each { assert it instanceof TimeUnit }
+        value.each { assert it.getDeclaringClass() == TimeUnit }
         return value
     }
 
     @Override
     Collection<TimeUnit> returnEnumCollectionArg(Collection<TimeUnit> value) {
-        value.each { assert it instanceof TimeUnit }
+        value.each { assert it.getDeclaringClass() == TimeUnit }
         return value
     }
 
@@ -226,79 +227,79 @@ class CalcServiceImpl implements CalcService {
 
     @Override
     List<OffsetDateTime> returnOffsetDateTimeListArg(List<OffsetDateTime> value) {
-        value.each { assert it instanceof OffsetDateTime }
+        value.each { assert it.getClass() == OffsetDateTime }
         return value
     }
 
     @Override
     Set<OffsetDateTime> returnOffsetDateTimeSetArg(Set<OffsetDateTime> value) {
-        value.each { assert it instanceof OffsetDateTime }
+        value.each { assert it.getClass() == OffsetDateTime }
         return value
     }
 
     @Override
     Collection<OffsetDateTime> returnOffsetDateTimeCollectionArg(Collection<OffsetDateTime> value) {
-        value.each { assert it instanceof OffsetDateTime }
+        value.each { assert it.getClass() == OffsetDateTime }
         return value
     }
 
     @Override
     Map<String, Integer> returnMapArg(Map<String, Integer> value) {
-        value.each { k, v -> assert k instanceof String && v instanceof Integer }
+        value.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
         return value
     }
 
     @Override
     Map<String, Integer>[] returnMapArrayArg(Map<String, Integer>[] value) {
-        value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+        value*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
         return value
     }
 
     @Override
     List<Map<String, Integer>> returnMapListArg(List<Map<String, Integer>> value) {
-        value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+        value*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
         return value
     }
 
     @Override
     Set<Map<String, Integer>> returnMapSetArg(Set<Map<String, Integer>> value) {
-        value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+        value*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
         return value
     }
 
     @Override
     Collection<Map<String, Integer>> returnMapCollectionArg(Collection<Map<String, Integer>> value) {
-        value*.each { k, v -> assert k instanceof String && v instanceof Integer }
+        value*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
         return value
     }
 
     @Override
     DataTypeObject returnObjectArg(DataTypeObject value) {
-        value.stringListValue.each { assert it instanceof String }
-        value.stringSetValue.each { assert it instanceof String }
-        value.stringCollectionValue.each { assert it instanceof String }
+        value.stringListValue.each { assert it.getClass() == String }
+        value.stringSetValue.each { assert it.getClass() == String }
+        value.stringCollectionValue.each { assert it.getClass() == String }
 
-        value.doubleListValue.each { assert it instanceof Double }
-        value.doubleSetValue.each { assert it instanceof Double }
-        value.doubleCollectionValue.each { assert it instanceof Double }
+        value.doubleListValue.each { assert it.getClass() == Double }
+        value.doubleSetValue.each { assert it.getClass() == Double }
+        value.doubleCollectionValue.each { assert it.getClass() == Double }
 
-        value.floatListValue.each { assert it instanceof Float }
-        value.floatSetValue.each { assert it instanceof Float }
-        value.floatCollectionValue.each { assert it instanceof Float }
+        value.floatListValue.each { assert it.getClass() == Float }
+        value.floatSetValue.each { assert it.getClass() == Float }
+        value.floatCollectionValue.each { assert it.getClass() == Float }
 
-        value.bigDecimalListValue.each { assert it instanceof BigDecimal }
-        value.bigDecimalSetValue.each { assert it instanceof BigDecimal }
-        value.bigDecimalCollectionValue.each { assert it instanceof BigDecimal }
+        value.bigDecimalListValue.each { assert it.getClass() == BigDecimal }
+        value.bigDecimalSetValue.each { assert it.getClass() == BigDecimal }
+        value.bigDecimalCollectionValue.each { assert it.getClass() == BigDecimal }
 
-        value.enumListValue.each { assert it instanceof TimeUnit }
-        value.enumSetValue.each { assert it instanceof TimeUnit }
-        value.enumCollectionValue.each { assert it instanceof TimeUnit }
+        value.enumListValue.each { assert it.getDeclaringClass() == TimeUnit }
+        value.enumSetValue.each { assert it.getDeclaringClass() == TimeUnit }
+        value.enumCollectionValue.each { assert it.getDeclaringClass() == TimeUnit }
 
-        value.mapValue.each { k, v -> assert k instanceof String && v instanceof Integer }
-        value.mapArrayValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
-        value.mapListValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
-        value.mapSetValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
-        value.mapCollectionValue*.each { k, v -> assert k instanceof String && v instanceof Integer }
+        value.mapValue.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
+        value.mapArrayValue*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
+        value.mapListValue*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
+        value.mapSetValue*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
+        value.mapCollectionValue*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
 
         return value
     }
