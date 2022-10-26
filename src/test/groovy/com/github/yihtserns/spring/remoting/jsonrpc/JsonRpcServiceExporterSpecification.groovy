@@ -1,6 +1,7 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.ToString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -292,25 +293,41 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail with parse error when the request json is invalid"() {
         when:
-        def response = requestCalc('{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]')
+        def response = requestCalc(invalidJson)
 
         then:
         response.body.result == null
         response.body.error.code == -32700
         response.body.error.message == "Parse error"
+
+        where:
+        invalidJson << [
+                '{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]',
+                '{"methodx": "foobar"}',
+                '{"key": "value"}',
+                '["1", "2"]',
+                '[1, 2]',
+                '',
+                '     ',
+                null
+        ]
     }
 
-    def "should fail with invalid request when params data type is incorrect"() {
+    def "should fail with invalid request when the request is invalid"() {
         when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "returnStringArg",
-                params: "neither list nor object"))
+        def response = requestCalc(invalidRequest)
 
         then:
-        response.result == null
-        response.error.code == -32600
-        response.error.message == "Invalid Request"
+        response.body.result == null
+        response.body.error.code == -32600
+        response.body.error.message == "Invalid Request"
+
+        where:
+        invalidRequest << [
+                new Request(id: UUID.randomUUID(), method: "returnStringArg", params: "invalid params data type"),
+                new Request(),
+                "{}",
+        ]
     }
 
     def "can use custom converter to transform a specific exception into error object"() {
@@ -449,10 +466,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
     }
 
     private Map callCalc(Request request) {
-        return restTemplate.postForObject(
-                "http://localhost:${port}/calc",
-                new HttpEntity(request, new HttpHeaders(contentType: MediaType.APPLICATION_JSON)),
-                Map)
+        return requestCalc(request).body
     }
 
     private ResponseEntity<Map> requestCalc(Object request) {
@@ -496,6 +510,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         }
     }
 
+    @ToString(includePackage = false, includeNames = true)
     static class Request {
 
         final String jsonrpc = "2.0"

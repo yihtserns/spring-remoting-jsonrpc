@@ -107,9 +107,15 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
             request = objectReader.readValue(inputStream, JsonRpcRequest.class);
             response.setId(request.getId());
 
-            method = name2Method.get(request.getMethod());
-            returnResponse = !StringUtils.isEmpty(request.getId());
-        } catch (StreamReadException ex) {
+            if (request.getMethod() == null || request.getParams() == null) {
+                response.setError(JsonRpcResponse.Error.invalidRequest());
+                request = null;
+            } else {
+                method = name2Method.get(request.getMethod());
+                returnResponse = !StringUtils.isEmpty(request.getId());
+            }
+        } catch (IOException ex) {
+            log.debug("An error occurred when trying to read the request body", ex);
             response.setError(JsonRpcResponse.Error.parseError());
         }
 
