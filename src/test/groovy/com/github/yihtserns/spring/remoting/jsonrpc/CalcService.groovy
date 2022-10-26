@@ -1,5 +1,7 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
+import org.javatuples.Quartet
+
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
@@ -90,6 +92,16 @@ interface CalcService {
     Set<OffsetDateTime> returnOffsetDateTimeSetArg(Set<OffsetDateTime> value)
 
     Collection<OffsetDateTime> returnOffsetDateTimeCollectionArg(Collection<OffsetDateTime> value)
+
+    Quartet<Integer, String, Double, OffsetDateTime> returnTupleArg(Quartet<Integer, String, Double, OffsetDateTime> value)
+
+    Quartet<Integer, String, Double, OffsetDateTime>[] returnTupleArrayArg(Quartet<Integer, String, Double, OffsetDateTime>[] value)
+
+    List<Quartet<Integer, String, Double, OffsetDateTime>> returnTupleListArg(List<Quartet<Integer, String, Double, OffsetDateTime>> value)
+
+    Set<Quartet<Integer, String, Double, OffsetDateTime>> returnTupleSetArg(Set<Quartet<Integer, String, Double, OffsetDateTime>> value)
+
+    Collection<Quartet<Integer, String, Double, OffsetDateTime>> returnTupleCollectionArg(Collection<Quartet<Integer, String, Double, OffsetDateTime>> value)
 
     Map<String, Integer> returnMapArg(Map<String, Integer> value)
 

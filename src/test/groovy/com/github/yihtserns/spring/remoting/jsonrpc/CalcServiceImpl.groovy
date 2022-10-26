@@ -1,5 +1,6 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
+import org.javatuples.Quartet
 
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
@@ -244,6 +245,69 @@ class CalcServiceImpl implements CalcService {
     }
 
     @Override
+    Quartet<Integer, String, Double, OffsetDateTime> returnTupleArg(Quartet<Integer, String, Double, OffsetDateTime> value) {
+        value.with {
+            assert it.value0.getClass() == Integer
+            assert it.value1.getClass() == String
+            assert it.value2.getClass() == Double
+            assert it.value3.getClass() == OffsetDateTime
+        }
+        return value
+    }
+
+    @Override
+    Quartet<Integer, String, Double, OffsetDateTime>[] returnTupleArrayArg(Quartet<Integer, String, Double, OffsetDateTime>[] value) {
+        value.each {
+            it.with {
+                assert it.value0.getClass() == Integer
+                assert it.value1.getClass() == String
+                assert it.value2.getClass() == Double
+                assert it.value3.getClass() == OffsetDateTime
+            }
+        }
+        return value
+    }
+
+    @Override
+    List<Quartet<Integer, String, Double, OffsetDateTime>> returnTupleListArg(List<Quartet<Integer, String, Double, OffsetDateTime>> value) {
+        value.each {
+            it.with {
+                assert it.value0.getClass() == Integer
+                assert it.value1.getClass() == String
+                assert it.value2.getClass() == Double
+                assert it.value3.getClass() == OffsetDateTime
+            }
+        }
+        return value
+    }
+
+    @Override
+    Set<Quartet<Integer, String, Double, OffsetDateTime>> returnTupleSetArg(Set<Quartet<Integer, String, Double, OffsetDateTime>> value) {
+        value.each {
+            it.with {
+                assert it.value0.getClass() == Integer
+                assert it.value1.getClass() == String
+                assert it.value2.getClass() == Double
+                assert it.value3.getClass() == OffsetDateTime
+            }
+        }
+        return value
+    }
+
+    @Override
+    Collection<Quartet<Integer, String, Double, OffsetDateTime>> returnTupleCollectionArg(Collection<Quartet<Integer, String, Double, OffsetDateTime>> value) {
+        value.each {
+            it.with {
+                assert it.value0.getClass() == Integer
+                assert it.value1.getClass() == String
+                assert it.value2.getClass() == Double
+                assert it.value3.getClass() == OffsetDateTime
+            }
+        }
+        return value
+    }
+
+    @Override
     Map<String, Integer> returnMapArg(Map<String, Integer> value) {
         value.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
         return value
@@ -294,6 +358,51 @@ class CalcServiceImpl implements CalcService {
         value.enumListValue.each { assert it.getDeclaringClass() == TimeUnit }
         value.enumSetValue.each { assert it.getDeclaringClass() == TimeUnit }
         value.enumCollectionValue.each { assert it.getDeclaringClass() == TimeUnit }
+
+        value.offsetDateTimeListValue.each { assert it.getClass() == OffsetDateTime }
+        value.offsetDateTimeSetValue.each { assert it.getClass() == OffsetDateTime }
+        value.offsetDateTimeCollectionValue.each { assert it.getClass() == OffsetDateTime }
+
+        value.tupleValue?.with {
+            assert it.value0.getClass() == Integer
+            assert it.value1.getClass() == String
+            assert it.value2.getClass() == Double
+            assert it.value3.getClass() == OffsetDateTime
+        }
+        value.tupleArrayValue.with {
+            it.each {
+                it.with {
+                    assert it.value0.getClass() == Integer
+                    assert it.value1.getClass() == String
+                    assert it.value2.getClass() == Double
+                    assert it.value3.getClass() == OffsetDateTime
+                }
+            }
+        }
+        value.tupleListValue.each {
+            it.with {
+                assert it.value0.getClass() == Integer
+                assert it.value1.getClass() == String
+                assert it.value2.getClass() == Double
+                assert it.value3.getClass() == OffsetDateTime
+            }
+        }
+        value.tupleSetValue.each {
+            it.with {
+                assert it.value0.getClass() == Integer
+                assert it.value1.getClass() == String
+                assert it.value2.getClass() == Double
+                assert it.value3.getClass() == OffsetDateTime
+            }
+        }
+        value.tupleCollectionValue.each {
+            it.with {
+                assert it.value0.getClass() == Integer
+                assert it.value1.getClass() == String
+                assert it.value2.getClass() == Double
+                assert it.value3.getClass() == OffsetDateTime
+            }
+        }
 
         value.mapValue.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }
         value.mapArrayValue*.each { k, v -> assert k.getClass() == String && v.getClass() == Integer }

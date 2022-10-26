@@ -16,12 +16,13 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
-import static java.time.ZoneOffset.UTC
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -32,6 +33,9 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     @Autowired
     private TestRestTemplate restTemplate
+
+    @Shared
+    private OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC)
 
     def "can call using params of int array"() {
         when:
@@ -136,11 +140,18 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnEnumCollectionArg"           | [TimeUnit.MINUTES.name()]                       | paramValue
 
         // Supported by SpringBoot's ObjectMapper
-        "returnOffsetDateTimeArg"           | OffsetDateTime.now(UTC).format(ISO_DATE_TIME)   | paramValue
-        "returnOffsetDateTimeArrayArg"      | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
-        "returnOffsetDateTimeListArg"       | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
-        "returnOffsetDateTimeSetArg"        | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
-        "returnOffsetDateTimeCollectionArg" | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "returnOffsetDateTimeArg"           | dateTime.format(ISO_DATE_TIME)                  | paramValue
+        "returnOffsetDateTimeArrayArg"      | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+        "returnOffsetDateTimeListArg"       | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+        "returnOffsetDateTimeSetArg"        | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+        "returnOffsetDateTimeCollectionArg" | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+
+        // Supported by custom de/serializer
+        "returnTupleArg"                    | [1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]   | paramValue
+        "returnTupleArrayArg"               | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
+        "returnTupleListArg"                | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
+        "returnTupleSetArg"                 | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
+        "returnTupleCollectionArg"          | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
 
         "returnMapArg"                      | ["Key 1": 1, "Key 2": 2]                        | paramValue
         "returnMapArrayArg"                 | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
@@ -205,11 +216,18 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "enumCollectionValue"           | [TimeUnit.MINUTES.name()]                       | paramValue
 
         // Supported by SpringBoot's ObjectMapper
-        "offsetDateTimeValue"           | OffsetDateTime.now(UTC).format(ISO_DATE_TIME)   | paramValue
-        "offsetDateTimeArrayValue"      | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
-        "offsetDateTimeListValue"       | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
-        "offsetDateTimeSetValue"        | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
-        "offsetDateTimeCollectionValue" | [OffsetDateTime.now(UTC).format(ISO_DATE_TIME)] | paramValue
+        "offsetDateTimeValue"           | dateTime.format(ISO_DATE_TIME)                  | paramValue
+        "offsetDateTimeArrayValue"      | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+        "offsetDateTimeListValue"       | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+        "offsetDateTimeSetValue"        | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+        "offsetDateTimeCollectionValue" | [dateTime.format(ISO_DATE_TIME)]                | paramValue
+
+        // Supported by custom de/serializer
+        "tupleValue"                    | [1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]   | paramValue
+        "tupleArrayValue"               | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
+        "tupleListValue"                | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
+        "tupleSetValue"                 | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
+        "tupleCollectionValue"          | [[1, "2", 3.3, dateTime.format(ISO_DATE_TIME)]] | paramValue
 
         "mapValue"                      | ["Key 1": 1, "Key 2": 2]                        | paramValue
         "mapArrayValue"                 | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
@@ -492,6 +510,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Bean
         CalcService calcService() {
             return new CalcServiceImpl()
+        }
+
+        @Bean
+        JavatuplesModule javatuplesModule() {
+            return new JavatuplesModule()
         }
 
         @Bean
