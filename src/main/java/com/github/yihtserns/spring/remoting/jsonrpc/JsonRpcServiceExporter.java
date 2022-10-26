@@ -35,6 +35,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestHandler;
 
 import javax.servlet.ServletInputStream;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -95,15 +96,14 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
     }
 
     @Override
-    public void handleRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException { // TODO: Handle IOException
-        ServletInputStream inputStream = httpRequest.getInputStream();
-
+    public void handleRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         JsonRpcRequest request = null;
         Method method = null;
         boolean returnResponse = true;
         JsonRpcResponse response = new JsonRpcResponse();
 
         try {
+            ServletInputStream inputStream = httpRequest.getInputStream();
             request = objectReader.readValue(inputStream, JsonRpcRequest.class);
             response.setId(request.getId());
 
@@ -160,8 +160,15 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
         if (!returnResponse) {
             httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
         } else {
-            httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            objectWriter.writeValue(httpResponse.getOutputStream(), response);
+            try {
+                httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+                ServletOutputStream outputStream = httpResponse.getOutputStream();
+                objectWriter.writeValue(outputStream, response);
+            } catch (IOException ex) {
+                log.error("An error has occurred while trying to write the response body", ex);
+                httpResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            }
         }
     }
 
