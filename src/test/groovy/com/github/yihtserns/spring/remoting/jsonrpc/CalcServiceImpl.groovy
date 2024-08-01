@@ -18,6 +18,11 @@ class CalcServiceImpl implements CalcService {
     }
 
     @Override
+    int subtractObjectTwoParams(SubtractObject bean, int invalid) {
+        throw new UnsupportedOperationException("Should not be called!")
+    }
+
+    @Override
     String returnStringArg(String value) {
         return value
     }

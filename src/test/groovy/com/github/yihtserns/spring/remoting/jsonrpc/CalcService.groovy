@@ -11,6 +11,8 @@ interface CalcService {
 
     int subtractObject(SubtractObject bean)
 
+    int subtractObjectTwoParams(SubtractObject bean, int invalid)
+
     String returnStringArg(String value)
 
     String[] returnStringArrayArg(String[] value)

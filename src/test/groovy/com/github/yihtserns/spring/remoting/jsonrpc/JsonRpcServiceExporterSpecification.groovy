@@ -69,6 +69,21 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
+    def "should fail when object params is sent to method with more than 1 parameter"() {
+        when:
+        String id = UUID.randomUUID()
+        def response = callCalc(new Request(
+                id: id,
+                method: "subtractObjectTwoParams",
+                params: [firstValue: 10, secondValue: 3]))
+
+        then:
+        response.id == id
+        response.result == null
+        response.error.code == -32602
+        response.error.message == "Invalid params"
+    }
+
     def "can call using params of object"() {
         when:
         String id = UUID.randomUUID()
