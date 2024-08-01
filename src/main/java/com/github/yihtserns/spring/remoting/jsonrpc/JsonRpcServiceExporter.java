@@ -189,7 +189,6 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
                 Parameter methodParameter = methodParameters[i];
                 JsonNode param = request.getParams().get(i);
 
-                // TODO: Can support method parameter annotation e.g. @JsonFormat?
                 Object methodArgument = objectReader.treeToValue(
                         param,
                         objectReader.getTypeFactory().constructType(methodParameter.getParameterizedType()));
