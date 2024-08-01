@@ -1,10 +1,12 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import org.javatuples.Quartet
 
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 class DataTypeObject {
 
     String stringValue

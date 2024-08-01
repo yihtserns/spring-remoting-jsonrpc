@@ -169,7 +169,12 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         then:
         response.error == null
-        response.result[paramName] == expectedReturnValue
+        response.result == [
+                booleanValue: false,
+                doubleValue : 0.0,
+                floatValue  : 0.0,
+                (paramName) : expectedReturnValue
+        ]
 
         where:
         paramName                       | paramValue                                      | expectedReturnValue
@@ -234,6 +239,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "mapListValue"                  | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
         "mapSetValue"                   | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | (paramValue as HashSet).toList()
         "mapCollectionValue"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
+
+        "objectValue"                   | [stringValue: "Expected Param Value"]           | paramValue + [booleanValue: false, doubleValue: 0.0, floatValue: 0.0]
     }
 
     def "supported empty object params"() {
@@ -245,7 +252,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
         then:
         response.error == null
-        response.result == new DataTypeObject().properties.tap { it.remove("class") }
+        response.result == [booleanValue: false, doubleValue: 0.0, floatValue: 0.0]
     }
 
     def "should fail with invalid params error when array params contains incompatible value"() {
