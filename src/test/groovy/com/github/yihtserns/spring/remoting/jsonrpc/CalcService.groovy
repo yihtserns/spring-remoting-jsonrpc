@@ -122,6 +122,4 @@ interface CalcService {
     void throwError()
 
     void throwCustomApplicationException(int errorCode) throws CustomApplicationException
-
-    void throwHandledIllegalArgumentException()
 }

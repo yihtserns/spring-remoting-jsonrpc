@@ -16,7 +16,6 @@
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,11 +23,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
@@ -48,9 +43,9 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAware, InitializingBean {
+public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingBean {
 
-    private Map<String, Method> name2Method = new HashMap<>();
+    private final Map<String, Method> name2Method = new HashMap<>();
     private ObjectReader objectReader;
     private ObjectWriter objectWriter;
 
@@ -60,13 +55,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
     private Object service;
     @Setter
     private ObjectMapper objectMapper = new ObjectMapper();
-    private ConversionService conversionService;
-
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.conversionService = beanFactory.getBeanProvider(ConversionService.class)
-                .getIfAvailable(() -> NoOpConversionService.INSTANCE);
-    }
+    @Setter
+    private ExceptionHandler exceptionHandler = new DefaultExceptionHandler();
 
     @Override
     public void afterPropertiesSet() {
@@ -137,20 +127,15 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, BeanFactoryAw
                 log.debug("Error when trying to call method: {}", request.getMethod(), ex);
                 response.setError(JsonRpcResponse.Error.invalidParams());
             } catch (InvocationTargetException ex) {
-                if (conversionService.canConvert(ex.getCause().getClass(), JsonRpcResponse.Error.class)) {
-                    response.setError(conversionService.convert(ex.getCause(), JsonRpcResponse.Error.class));
+                JsonRpcResponse.Error error = exceptionHandler.handleException(ex.getCause(), method);
+                if (error.getCode() <= -32000 && error.getCode() >= -32768) {
+                    log.error("Exception [{}] was converted into Error object using a reserved error code: {}",
+                            ex.getCause(),
+                            error.getCode());
 
-                    if (response.getError().getCode() <= -32000 && response.getError().getCode() >= -32768) {
-                        log.error("Exception [{}] was converted into Error object using a reserved error code: {}",
-                                ex.getCause(),
-                                response.getError().getCode());
-
-                        response.setError(JsonRpcResponse.Error.internalError());
-                    }
-                } else {
-                    log.error("Error thrown by method: {}", method, ex.getCause());
-                    response.setError(JsonRpcResponse.Error.internalError());
+                    error = JsonRpcResponse.Error.internalError();
                 }
+                response.setError(error);
             } catch (IllegalAccessException | InstantiationException | RuntimeException ex) {
                 log.error("Failed to call method: {}", request.getMethod(), ex);
                 response.setError(JsonRpcResponse.Error.internalError());

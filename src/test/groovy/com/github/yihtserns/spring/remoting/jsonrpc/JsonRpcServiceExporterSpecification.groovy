@@ -9,7 +9,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -380,19 +379,6 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
-    def "can use anonymous class converter to transform a specific exception into error object"() {
-        when:
-        def responseWithCustomErrorObject = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "throwHandledIllegalArgumentException",
-                params: []))
-
-        then:
-        responseWithCustomErrorObject.result == null
-        responseWithCustomErrorObject.error.code == -1
-        responseWithCustomErrorObject.error.message == "Handled"
-    }
-
     def "should return internal error if custom converter produces error object that uses reserved error code"() {
         when:
         def responseWithCustomErrorObject = callCalc(new Request(
@@ -514,7 +500,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
             return new JsonRpcServiceExporter(
                     serviceInterface: CalcService,
                     service: calcService(),
-                    objectMapper: objectMapper)
+                    objectMapper: objectMapper,
+                    exceptionHandler: new CustomApplicationExceptionToError())
         }
 
         @Bean
@@ -525,21 +512,6 @@ class JsonRpcServiceExporterSpecification extends Specification {
         @Bean
         JavatuplesModule javatuplesModule() {
             return new JavatuplesModule()
-        }
-
-        @Bean
-        CustomApplicationExceptionToError customApplicationExceptionToError() {
-            return new CustomApplicationExceptionToError()
-        }
-
-        @Bean
-        Converter<IllegalArgumentException, JsonRpcResponse.Error> illegalArgumentExceptionToError() {
-            return new Converter<IllegalArgumentException, JsonRpcResponse.Error>() {
-                @Override
-                JsonRpcResponse.Error convert(IllegalArgumentException ex) {
-                    return new JsonRpcResponse.Error(-1, ex.message)
-                }
-            }
         }
     }
 

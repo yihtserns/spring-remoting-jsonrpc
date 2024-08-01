@@ -432,9 +432,4 @@ class CalcServiceImpl implements CalcService {
     void throwCustomApplicationException(int errorCode) throws CustomApplicationException {
         throw new CustomApplicationException(errorCode)
     }
-
-    @Override
-    void throwHandledIllegalArgumentException() {
-        throw new IllegalArgumentException("Handled")
-    }
 }
