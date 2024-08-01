@@ -113,6 +113,8 @@ interface CalcService {
 
     Collection<Map<String, Integer>> returnMapCollectionArg(Collection<Map<String, Integer>> value)
 
+    ValueObject returnValueObjectArg(ValueObject value)
+
     DataTypeObject returnObjectArg(DataTypeObject value)
 
     void throwException()

@@ -158,6 +158,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "returnMapListArg"                  | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
         "returnMapSetArg"                   | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | (paramValue as HashSet).toList()
         "returnMapCollectionArg"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
+        "returnValueObjectArg"              | 5                                               | paramValue
     }
 
     def "supported object params data types, via Jackson JSON"() {
@@ -241,6 +242,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "mapCollectionValue"            | [["Key 1": 1, "Key 2": 2], ["Key 3": 3]]        | paramValue
 
         "objectValue"                   | [stringValue: "Expected Param Value"]           | paramValue + [booleanValue: false, doubleValue: 0.0, floatValue: 0.0]
+
+        "value"                         | 5                                               | paramValue
     }
 
     def "supported empty object params"() {

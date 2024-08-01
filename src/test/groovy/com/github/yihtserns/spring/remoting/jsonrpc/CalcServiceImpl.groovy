@@ -338,6 +338,11 @@ class CalcServiceImpl implements CalcService {
     }
 
     @Override
+    ValueObject returnValueObjectArg(ValueObject value) {
+        return value
+    }
+
+    @Override
     DataTypeObject returnObjectArg(DataTypeObject value) {
         value.stringListValue.each { assert it.getClass() == String }
         value.stringSetValue.each { assert it.getClass() == String }

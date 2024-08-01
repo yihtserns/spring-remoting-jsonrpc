@@ -70,4 +70,6 @@ class DataTypeObject {
     Collection<Map<String, Integer>> mapCollectionValue
 
     DataTypeObject objectValue
+
+    ValueObject value
 }
