@@ -162,31 +162,33 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         Parameter[] methodParameters = method.getParameters();
 
         if (requestParameters.size() != methodParameters.length) {
-            // TODO: Better error message & error response
-            log.error("Expecting array params of length {} but was {}", methodParameters.length, requestParameters.size());
+            log.error("Expecting array params of length {} as arguments for method {}, but was {}",
+                    methodParameters.length,
+                    method,
+                    requestParameters.size());
             response.setError(JsonRpcResponse.Error.invalidParams());
             return;
         }
 
-        try {
-            List<Object> params = new ArrayList<>();
-            for (int i = 0; i < methodParameters.length; i++) {
-                Parameter methodParameter = methodParameters[i];
-                JsonNode param = request.getParams().get(i);
+        List<Object> params = new ArrayList<>();
+        for (int i = 0; i < methodParameters.length; i++) {
+            Parameter methodParameter = methodParameters[i];
+            JsonNode param = request.getParams().get(i);
 
+            try {
                 Object methodArgument = objectReader.treeToValue(
                         param,
                         objectReader.getTypeFactory().constructType(methodParameter.getParameterizedType()));
 
                 params.add(methodArgument);
+            } catch (JsonProcessingException ex) {
+                log.error("Failed to convert array params #{} to method [{}] argument [{}]", i, method, methodParameter, ex);
+                response.setError(JsonRpcResponse.Error.invalidParams());
+                return;
             }
-
-            response.setResult(method.invoke(service, params.toArray()));
-        } catch (JsonProcessingException ex) {
-            // TODO: Better error message & error response
-            log.error("Failed to convert params entry type to method argument type", ex);
-            response.setError(JsonRpcResponse.Error.invalidParams());
         }
+
+        response.setResult(method.invoke(service, params.toArray()));
     }
 
     private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException, IllegalAccessException, InstantiationException {
