@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.github.yihtserns.spring.remoting.jsonrpc.ExecutionContext;
 import com.github.yihtserns.spring.remoting.jsonrpc.JsonProcessor;
 import com.github.yihtserns.spring.remoting.jsonrpc.JsonRpcRequest;
 import com.github.yihtserns.spring.remoting.jsonrpc.JsonRpcResponse;
@@ -57,9 +58,9 @@ public class JacksonJsonProcessor implements JsonProcessor {
     }
 
     @Override
-    public List<Object> processParamsIntoMethodArguments(JsonRpcRequest<?> request, Method method) {
+    public List<Object> processParamsIntoMethodArguments(ExecutionContext executionContext) {
         List<JsonNode> requestParams;
-        JsonNode params = (JsonNode) request.getParams();
+        JsonNode params = (JsonNode) executionContext.getRequest().getParams();
         if (params == null || params.isNull()) {
             requestParams = emptyList();
         } else if (params.isArray()) {
@@ -74,6 +75,7 @@ public class JacksonJsonProcessor implements JsonProcessor {
             return null;
         }
 
+        Method method = executionContext.getServiceInterfaceMethod();
         List<Object> methodArguments = new ArrayList<>();
         for (int i = 0; i < requestParams.size(); i++) {
             JsonNode param = requestParams.get(i);

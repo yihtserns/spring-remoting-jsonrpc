@@ -7,8 +7,6 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Method;
-
 /**
  * @author yihtserns
  */
@@ -16,8 +14,8 @@ import java.lang.reflect.Method;
 public class DefaultExceptionHandler implements ExceptionHandler {
 
     @Override
-    public JsonRpcResponse.Error handleException(Throwable exception, Method method) {
-        log.error("Error thrown by method: {}", method, exception);
+    public JsonRpcResponse.Error handleException(Throwable exception, ExecutionContext executionContext) {
+        log.error("Error thrown by method: {}", executionContext.getServiceImplementationMethod(), exception);
 
         return JsonRpcResponse.Error.internalError();
     }

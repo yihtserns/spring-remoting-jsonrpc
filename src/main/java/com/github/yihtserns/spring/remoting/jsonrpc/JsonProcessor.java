@@ -7,7 +7,6 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -29,7 +28,7 @@ public interface JsonProcessor {
      *     nor JSON object).</li>
      * </ol>
      */
-    List<Object> processParamsIntoMethodArguments(JsonRpcRequest<?> request, Method method) throws Exception;
+    List<Object> processParamsIntoMethodArguments(ExecutionContext context) throws Exception;
 
     void processResponse(JsonRpcResponse response, OutputStream outputStream) throws Exception;
 }

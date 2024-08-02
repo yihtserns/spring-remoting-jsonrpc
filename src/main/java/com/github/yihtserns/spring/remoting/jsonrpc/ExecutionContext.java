@@ -5,10 +5,17 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
+import lombok.Getter;
+
+import java.lang.reflect.Method;
+
 /**
  * @author yihtserns
  */
-public interface ExceptionHandler {
+@Getter
+public class ExecutionContext {
 
-    JsonRpcResponse.Error handleException(Throwable exception, ExecutionContext executionContext);
+    JsonRpcRequest<?> request;
+    Method serviceInterfaceMethod;
+    Method serviceImplementationMethod;
 }
