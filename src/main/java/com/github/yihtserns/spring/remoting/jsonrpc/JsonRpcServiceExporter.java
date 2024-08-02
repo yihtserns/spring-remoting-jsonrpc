@@ -119,26 +119,42 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                 if (method == null) {
                     response.setError(JsonRpcResponse.Error.methodNotFound());
                 } else {
-                    if (request.getParams() == null || request.getParams().isNull()) {
-                        executeMethod(
-                                emptyList(),
-                                response,
-                                method);
-                    } else if (request.getParams().isArray()) {
-                        executeMethod(
-                                stream(request.getParams().spliterator(), false).collect(toList()),
-                                response,
-                                method);
-                    } else if (request.getParams().isObject()) {
-                        executeMethod(
-                                singletonList(request.getParams()),
-                                response,
-                                method);
-                    } else {
-                        log.error("Expected params of type JSON array or object, but was: {}", request.getParams());
-                        returnResponse = true;
-                        response.setError(JsonRpcResponse.Error.invalidRequest());
+                    try {
+                        List<Object> methodArgs = null;
+                        if (request.getParams() == null || request.getParams().isNull()) {
+                            methodArgs = paramsToMethodArguments(
+                                    emptyList(),
+                                    method);
+                        } else if (request.getParams().isArray()) {
+                            methodArgs = paramsToMethodArguments(
+                                    stream(request.getParams().spliterator(), false).collect(toList()),
+                                    method);
+                        } else if (request.getParams().isObject()) {
+                            methodArgs = paramsToMethodArguments(
+                                    singletonList(request.getParams()),
+                                    method);
+                        }
+
+                        if (methodArgs != null) {
+                            if (methodArgs.size() != method.getParameterCount()) {
+                                log.error("Expecting params of length {} as arguments for method {}, but was {}",
+                                        method.getParameterCount(),
+                                        method,
+                                        methodArgs.size());
+                                response.setError(JsonRpcResponse.Error.invalidParams());
+                            } else {
+                                response.setResult(method.invoke(service, methodArgs.toArray()));
+                            }
+                        } else {
+                            log.error("Expected params of type JSON array or object, but was: {}", request.getParams());
+                            returnResponse = true;
+                            response.setError(JsonRpcResponse.Error.invalidRequest());
+                        }
+                    } catch (RuntimeException ex) {
+                        log.error("An error has occurred while creating arguments for method: {}", method, ex);
+                        response.setError(JsonRpcResponse.Error.invalidParams());
                     }
+
                 }
             } catch (InvocationTargetException ex) {
                 JsonRpcResponse.Error error = exceptionHandler.handleException(ex.getCause(), method);
@@ -171,36 +187,28 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         }
     }
 
-    private void executeMethod(List<JsonNode> requestParameters, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException {
-        Parameter[] methodParameters = method.getParameters();
-
-        if (requestParameters.size() != methodParameters.length) {
-            log.error("Expecting params of length {} as arguments for method {}, but was {}",
-                    methodParameters.length,
-                    method,
-                    requestParameters.size());
-            response.setError(JsonRpcResponse.Error.invalidParams());
-            return;
-        }
-
-        List<Object> params = new ArrayList<>();
-        for (int i = 0; i < methodParameters.length; i++) {
-            Parameter methodParameter = methodParameters[i];
+    private List<Object> paramsToMethodArguments(List<JsonNode> requestParameters, Method method) {
+        List<Object> methodArguments = new ArrayList<>();
+        for (int i = 0; i < requestParameters.size(); i++) {
             JsonNode param = requestParameters.get(i);
 
-            try {
-                Object methodArgument = objectReader.treeToValue(
-                        param,
-                        objectReader.getTypeFactory().constructType(methodParameter.getParameterizedType()));
+            if (i < method.getParameterCount()) {
+                Parameter methodParameter = method.getParameters()[i];
 
-                params.add(methodArgument);
-            } catch (JsonProcessingException ex) {
-                log.error("Failed to convert params #{} to method [{}] argument [{}]", i, method, methodParameter, ex);
-                response.setError(JsonRpcResponse.Error.invalidParams());
-                return;
+                try {
+                    methodArguments.add(objectReader.treeToValue(
+                            param,
+                            objectReader.getTypeFactory().constructType(methodParameter.getParameterizedType())));
+                } catch (JsonProcessingException ex) {
+                    throw new IllegalArgumentException(
+                            String.format("Failed to convert params #%s to argument [%s]", i, methodParameter),
+                            ex);
+                }
+            } else {
+                methodArguments.add(param.toString());
             }
         }
 
-        response.setResult(method.invoke(service, params.toArray()));
+        return methodArguments;
     }
 }
