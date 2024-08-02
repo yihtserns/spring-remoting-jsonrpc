@@ -42,6 +42,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+
 @Slf4j
 public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingBean {
 
@@ -115,9 +119,15 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                     response.setError(JsonRpcResponse.Error.methodNotFound());
                 } else {
                     if (request.getParams().isArray()) {
-                        executeArrayParamsMethod(request, response, method);
+                        executeMethod(
+                                stream(request.getParams().spliterator(), false).collect(toList()),
+                                response,
+                                method);
                     } else if (request.getParams().isObject()) {
-                        executeObjectParamsMethod(request, response, method);
+                        executeMethod(
+                                singletonList(request.getParams()),
+                                response,
+                                method);
                     } else {
                         returnResponse = true;
                         response.setError(JsonRpcResponse.Error.invalidRequest());
@@ -133,7 +143,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                     error = JsonRpcResponse.Error.internalError();
                 }
                 response.setError(error);
-            } catch (IllegalAccessException | InstantiationException | RuntimeException ex) {
+            } catch (IllegalAccessException | RuntimeException ex) {
                 log.error("Failed to call method: {}", request.getMethod(), ex);
                 response.setError(JsonRpcResponse.Error.internalError());
             }
@@ -154,12 +164,11 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         }
     }
 
-    private void executeArrayParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException {
-        JsonNode requestParameters = request.getParams();
+    private void executeMethod(List<JsonNode> requestParameters, JsonRpcResponse response, Method method) throws IllegalAccessException, InvocationTargetException {
         Parameter[] methodParameters = method.getParameters();
 
         if (requestParameters.size() != methodParameters.length) {
-            log.error("Expecting array params of length {} as arguments for method {}, but was {}",
+            log.error("Expecting params of length {} as arguments for method {}, but was {}",
                     methodParameters.length,
                     method,
                     requestParameters.size());
@@ -170,7 +179,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         List<Object> params = new ArrayList<>();
         for (int i = 0; i < methodParameters.length; i++) {
             Parameter methodParameter = methodParameters[i];
-            JsonNode param = request.getParams().get(i);
+            JsonNode param = requestParameters.get(i);
 
             try {
                 Object methodArgument = objectReader.treeToValue(
@@ -179,31 +188,12 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
 
                 params.add(methodArgument);
             } catch (JsonProcessingException ex) {
-                log.error("Failed to convert array params #{} to method [{}] argument [{}]", i, method, methodParameter, ex);
+                log.error("Failed to convert params #{} to method [{}] argument [{}]", i, method, methodParameter, ex);
                 response.setError(JsonRpcResponse.Error.invalidParams());
                 return;
             }
         }
 
         response.setResult(method.invoke(service, params.toArray()));
-    }
-
-    private void executeObjectParamsMethod(JsonRpcRequest request, JsonRpcResponse response, Method method) throws InvocationTargetException, IllegalAccessException, InstantiationException {
-        if (method.getParameterCount() != 1) {
-            log.error("Expecting 1-arg method to handle object params, but was {}", method);
-            response.setError(JsonRpcResponse.Error.invalidParams());
-            return;
-        }
-
-        Class<?> parameterType = method.getParameterTypes()[0];
-        try {
-            Object beanArg = objectReader.treeToValue(request.getParams(), parameterType);
-
-            response.setResult(method.invoke(service, beanArg));
-        } catch (JsonProcessingException ex) {
-            log.error("Failed to convert object params to method [{}] argument [{}]", method, parameterType);
-            response.setError(JsonRpcResponse.Error.invalidParams());
-            return;
-        }
     }
 }
