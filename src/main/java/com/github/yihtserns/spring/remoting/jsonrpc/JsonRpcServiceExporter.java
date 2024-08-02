@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -101,7 +102,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
             request = objectReader.readValue(inputStream, JsonRpcRequest.class);
             response.setId(request.getId());
 
-            if (request.getMethod() == null || request.getParams() == null) {
+            if (request.getMethod() == null) {
                 response.setError(JsonRpcResponse.Error.invalidRequest());
                 request = null;
             } else {
@@ -118,7 +119,12 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                 if (method == null) {
                     response.setError(JsonRpcResponse.Error.methodNotFound());
                 } else {
-                    if (request.getParams().isArray()) {
+                    if (request.getParams() == null || request.getParams().isNull()) {
+                        executeMethod(
+                                emptyList(),
+                                response,
+                                method);
+                    } else if (request.getParams().isArray()) {
                         executeMethod(
                                 stream(request.getParams().spliterator(), false).collect(toList()),
                                 response,
@@ -129,6 +135,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                                 response,
                                 method);
                     } else {
+                        log.error("Expected params of type JSON array or object, but was: {}", request.getParams());
                         returnResponse = true;
                         response.setError(JsonRpcResponse.Error.invalidRequest());
                     }

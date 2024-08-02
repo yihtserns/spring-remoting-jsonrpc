@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit
 
 interface CalcService {
 
+    int returnInt()
+
     int subtractArray(int firstValue, int secondValue)
 
     int subtractObject(SubtractObject bean)

@@ -8,6 +8,11 @@ import java.util.concurrent.TimeUnit
 class CalcServiceImpl implements CalcService {
 
     @Override
+    int returnInt() {
+        return 999
+    }
+
+    @Override
     int subtractArray(int firstValue, int secondValue) {
         return firstValue - secondValue;
     }

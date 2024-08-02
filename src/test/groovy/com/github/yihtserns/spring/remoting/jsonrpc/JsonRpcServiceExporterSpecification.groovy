@@ -1,6 +1,8 @@
 package com.github.yihtserns.spring.remoting.jsonrpc
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.NullNode
 import groovy.transform.ToString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -22,6 +24,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -35,6 +38,47 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     @Shared
     private OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC)
+
+    def "can call using no params for method with 0-arg"() {
+        when:
+        String id = UUID.randomUUID()
+        def response = callCalc(new Request(
+                id: id,
+                method: "returnInt",
+                params: nullValue))
+
+        then:
+        response.id == id
+        response.error == null
+        response.result == 999
+
+        where:
+        nullValue << [
+                null,
+                NullNode.instance
+        ]
+    }
+
+    def "should fail when params is sent for method with 0-arg"() {
+        when:
+        String id = UUID.randomUUID()
+        def response = callCalc(new Request(
+                id: id,
+                method: "returnInt",
+                params: invalidParams))
+
+        then:
+        response.id == id
+        response.result == null
+        response.error.code == -32602
+        response.error.message == "Invalid params"
+
+        where:
+        invalidParams << [
+                [3],
+                [value: 3]
+        ]
+    }
 
     def "can call using params of int array"() {
         when:
@@ -69,6 +113,20 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
+    def "can call using params of object"() {
+        when:
+        String id = UUID.randomUUID()
+        def response = callCalc(new Request(
+                id: id,
+                method: "subtractObject",
+                params: [firstValue: 10, secondValue: 3]))
+
+        then:
+        response.id == id
+        response.error == null
+        response.result == 10 - 3
+    }
+
     def "should fail when object params is sent to method with more than 1 parameter"() {
         when:
         String id = UUID.randomUUID()
@@ -82,20 +140,6 @@ class JsonRpcServiceExporterSpecification extends Specification {
         response.result == null
         response.error.code == -32602
         response.error.message == "Invalid params"
-    }
-
-    def "can call using params of object"() {
-        when:
-        String id = UUID.randomUUID()
-        def response = callCalc(new Request(
-                id: id,
-                method: "subtractObject",
-                params: [firstValue: 10, secondValue: 3]))
-
-        then:
-        response.id == id
-        response.error == null
-        response.result == 10 - 3
     }
 
     def "supported array params data types"() {
@@ -536,6 +580,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         final String jsonrpc = "2.0"
         String id
         String method
+        @JsonInclude(Include.NON_NULL)
         Object params
     }
 }
