@@ -3,6 +3,7 @@ package com.github.yihtserns.spring.remoting.jsonrpc
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.NullNode
+import com.github.yihtserns.spring.remoting.jsonrpc.jackson.JacksonJsonProcessor
 import groovy.transform.ToString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -500,7 +501,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
         when:
         def exporter = new JsonRpcServiceExporter(
                 serviceInterface: OverloadedMethodService,
-                service: new OverloadedMethodServiceImpl())
+                service: new OverloadedMethodServiceImpl(),
+                jsonProcessor: Mock(JsonProcessor))
         exporter.afterPropertiesSet()
 
         then:
@@ -559,7 +561,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
             return new JsonRpcServiceExporter(
                     serviceInterface: CalcService,
                     service: calcService(),
-                    objectMapper: objectMapper,
+                    jsonProcessor: JacksonJsonProcessor.from(objectMapper),
                     exceptionHandler: new CustomApplicationExceptionToError())
         }
 

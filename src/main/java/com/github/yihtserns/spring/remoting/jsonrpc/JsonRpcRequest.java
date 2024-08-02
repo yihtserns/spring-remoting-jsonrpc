@@ -15,16 +15,15 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class JsonRpcRequest {
+public class JsonRpcRequest<P> {
 
     private String jsonrpc;
     private String id;
     private String method;
-    private JsonNode params;
+    private P params;
 }
