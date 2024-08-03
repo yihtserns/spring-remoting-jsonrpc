@@ -49,9 +49,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 params: nullValue))
 
         then:
-        response.id == id
-        response.error == null
-        response.result == 999
+        response == [
+                jsonrpc: "2.0",
+                id     : id,
+                result : 999
+        ]
 
         where:
         nullValue << [
@@ -69,10 +71,14 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 params: invalidParams))
 
         then:
-        response.id == id
-        response.result == null
-        response.error.code == -32602
-        response.error.message == "Invalid params"
+        response == [
+                jsonrpc: "2.0",
+                id     : id,
+                error  : [
+                        code   : -32602,
+                        message: "Invalid params"
+                ]
+        ]
 
         where:
         invalidParams << [
@@ -90,9 +96,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 params: [10, 3]))
 
         then:
-        response.id == id
-        response.error == null
-        response.result == 10 - 3
+        response == [
+                jsonrpc: "2.0",
+                id     : id,
+                result : 10 - 3
+        ]
     }
 
     def "should fail when params array size is not the same as the method parameters count"() {
@@ -101,10 +109,14 @@ class JsonRpcServiceExporterSpecification extends Specification {
         def response = callCalc(new Request(id: id, method: "subtractArray", params: params))
 
         then:
-        response.id == id
-        response.result == null
-        response.error.code == -32602
-        response.error.message == "Invalid params"
+        response == [
+                jsonrpc: "2.0",
+                id     : id,
+                error  : [
+                        code   : -32602,
+                        message: "Invalid params"
+                ]
+        ]
 
         where:
         params << [
@@ -123,9 +135,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 params: [firstValue: 10, secondValue: 3]))
 
         then:
-        response.id == id
-        response.error == null
-        response.result == 10 - 3
+        response == [
+                jsonrpc: "2.0",
+                id     : id,
+                result : 10 - 3
+        ]
     }
 
     def "should fail when object params is sent to method with more than 1 parameter"() {
@@ -137,22 +151,29 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 params: [firstValue: 10, secondValue: 3]))
 
         then:
-        response.id == id
-        response.result == null
-        response.error.code == -32602
-        response.error.message == "Invalid params"
+        response == [
+                jsonrpc: "2.0",
+                id     : id,
+                error  : [
+                        code   : -32602,
+                        message: "Invalid params"
+                ]
+        ]
     }
 
     def "supported array params data types"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: method, params: [paramValue])
+
         when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: method,
-                params: [paramValue]))
+        def response = callCalc(request)
 
         then:
-        response.error == null
-        response.result == expectedReturnValue
+        response == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                result : expectedReturnValue
+        ]
 
         where:
         method                              | paramValue                                      | expectedReturnValue
@@ -221,19 +242,23 @@ class JsonRpcServiceExporterSpecification extends Specification {
     }
 
     def "supported object params data types, via Jackson JSON"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: "returnObjectArg", params: [(paramName): paramValue])
+
         when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "returnObjectArg",
-                params: [(paramName): paramValue]))
+        def response = callCalc(request)
 
         then:
-        response.error == null
-        response.result == [
-                booleanValue: false,
-                doubleValue : 0.0,
-                floatValue  : 0.0,
-                (paramName) : expectedReturnValue
+        response == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                result : [
+                        booleanValue: false,
+                        doubleValue : 0.0,
+                        floatValue  : 0.0,
+                        (paramName) : expectedReturnValue
+                ]
+
         ]
 
         where:
@@ -306,28 +331,37 @@ class JsonRpcServiceExporterSpecification extends Specification {
     }
 
     def "supported empty object params"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: "returnObjectArg", params: [:])
+
         when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "returnObjectArg",
-                params: [:]))
+        def response = callCalc(request)
 
         then:
-        response.error == null
-        response.result == [booleanValue: false, doubleValue: 0.0, floatValue: 0.0]
+        response == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                result : [booleanValue: false, doubleValue: 0.0, floatValue: 0.0]
+
+        ]
     }
 
     def "should fail with invalid params error when array params contains incompatible value"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: method, params: [paramValue])
+
         when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: method,
-                params: [paramValue]))
+        def response = callCalc(request)
 
         then:
-        response.result == null
-        response.error.code == -32602
-        response.error.message == "Invalid params"
+        response == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                error  : [
+                        code   : -32602,
+                        message: "Invalid params"
+                ]
+        ]
 
         where:
         method                              | paramValue
@@ -347,29 +381,39 @@ class JsonRpcServiceExporterSpecification extends Specification {
     }
 
     def "should fail with invalid params error when object params contains incorrect parameter name"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: "returnObjectArg", params: ["nonExistentParam": 1])
+
         when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "returnObjectArg",
-                params: ["nonExistentParam": 1]))
+        def response = callCalc(request)
 
         then:
-        response.result == null
-        response.error.code == -32602
-        response.error.message == "Invalid params"
+        response == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                error  : [
+                        code   : -32602,
+                        message: "Invalid params"
+                ]
+        ]
     }
 
     def "should fail with internal error when method throws exception"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: method, params: [])
+
         when:
-        def response = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: method,
-                params: []))
+        def response = callCalc(request)
 
         then:
-        response.result == null
-        response.error.code == -32603
-        response.error.message == "Internal error"
+        response == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                error  : [
+                        code   : -32603,
+                        message: "Internal error"
+                ]
+        ]
 
         where:
         method << [
@@ -383,9 +427,13 @@ class JsonRpcServiceExporterSpecification extends Specification {
         def response = requestCalc(invalidJson)
 
         then:
-        response.body.result == null
-        response.body.error.code == -32700
-        response.body.error.message == "Parse error"
+        response.body == [
+                jsonrpc: "2.0",
+                error  : [
+                        code   : -32700,
+                        message: "Parse error"
+                ]
+        ]
 
         where:
         invalidJson << [
@@ -405,9 +453,14 @@ class JsonRpcServiceExporterSpecification extends Specification {
         def response = requestCalc(invalidRequest)
 
         then:
-        response.body.result == null
-        response.body.error.code == -32600
-        response.body.error.message == "Invalid Request"
+        response.body == [
+                jsonrpc: "2.0",
+                id     : invalidRequest.hasProperty("id") ? invalidRequest.id : null,
+                error  : [
+                        code   : -32600,
+                        message: "Invalid Request"
+                ]
+        ]
 
         where:
         invalidRequest << [
@@ -418,16 +471,21 @@ class JsonRpcServiceExporterSpecification extends Specification {
     }
 
     def "can use custom converter to transform a specific exception into error object"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: "throwCustomApplicationException", params: [errorCode])
+
         when:
-        def responseWithCustomErrorObject = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "throwCustomApplicationException",
-                params: [errorCode]))
+        def responseWithCustomErrorObject = callCalc(request)
 
         then:
-        responseWithCustomErrorObject.result == null
-        responseWithCustomErrorObject.error.code == errorCode
-        responseWithCustomErrorObject.error.message == "Custom Application Error"
+        responseWithCustomErrorObject == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                error  : [
+                        code   : errorCode,
+                        message: "Custom Application Error"
+                ]
+        ]
 
         where:
         // -32000 to -32768 are reserved for pre-defined errors
@@ -440,16 +498,21 @@ class JsonRpcServiceExporterSpecification extends Specification {
     }
 
     def "should return internal error if custom converter produces error object that uses reserved error code"() {
+        given:
+        def request = new Request(id: UUID.randomUUID(), method: "throwCustomApplicationException", params: [reservedErrorCode])
+
         when:
-        def responseWithCustomErrorObject = callCalc(new Request(
-                id: UUID.randomUUID(),
-                method: "throwCustomApplicationException",
-                params: [reservedErrorCode]))
+        def responseWithCustomErrorObject = callCalc(request)
 
         then:
-        responseWithCustomErrorObject.result == null
-        responseWithCustomErrorObject.error.code == -32603
-        responseWithCustomErrorObject.error.message == "Internal error"
+        responseWithCustomErrorObject == [
+                jsonrpc: "2.0",
+                id     : request.id,
+                error  : [
+                        code   : -32603,
+                        message: "Internal error"
+                ]
+        ]
 
         where:
         reservedErrorCode | description
@@ -486,14 +549,23 @@ class JsonRpcServiceExporterSpecification extends Specification {
     def "should return error when the request is incorrect, even if it does not have an id"() {
         expect:
         with(requestCalc('{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]')) {
-            body.id == null
-            body.error.code == -32700
-            body.error.message == "Parse error"
+            body == [
+                    jsonrpc: "2.0",
+                    error  : [
+                            code   : -32700,
+                            message: "Parse error"
+                    ]
+            ]
         }
         with(requestCalc(new Request(method: "returnStringArg", params: "invalid params, neither list nor object"))) {
-            body.id == null
-            body.error.code == -32600
-            body.error.message == "Invalid Request"
+            body == [
+                    jsonrpc: "2.0",
+                    id     : null,
+                    error  : [
+                            code   : -32600,
+                            message: "Invalid Request"
+                    ]
+            ]
         }
     }
 

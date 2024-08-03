@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingBean {
@@ -85,7 +86,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         try {
             ServletInputStream inputStream = httpRequest.getInputStream();
             executionContext.request = jsonProcessor.processRequest(inputStream);
-            response.setId(executionContext.getRequest().getId());
+            response.setId(Optional.ofNullable(executionContext.getRequest().getId()));
 
             if (executionContext.getRequest().getMethod() == null) {
                 response.setError(JsonRpcResponse.Error.invalidRequest());

@@ -15,18 +15,26 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Optional;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+@JsonInclude(Include.NON_NULL)
 @Getter
 @Setter
 public class JsonRpcResponse {
 
     private String jsonrpc = "2.0";
-    private String id;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private Optional<String> id;
     private Object result;
     private Error error;
 
+    @JsonInclude(Include.NON_NULL)
     @Getter
     public static class Error {
 
