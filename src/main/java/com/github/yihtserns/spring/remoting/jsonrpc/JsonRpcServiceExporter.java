@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestHandler;
 
 import javax.servlet.ServletInputStream;
@@ -80,7 +79,6 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
     @Override
     public void handleRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         ExecutionContext executionContext = new ExecutionContext();
-        boolean returnResponse = true;
         JsonRpcResponse response = new JsonRpcResponse();
 
         try {
@@ -97,8 +95,6 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                     executionContext.serviceInterfaceMethod = serviceMethod.interfaceMethod;
                     executionContext.serviceImplementationMethod = serviceMethod.implementationMethod;
                 }
-
-                returnResponse = !StringUtils.isEmpty(executionContext.getRequest().getId());
             }
         } catch (Exception ex) {
             log.debug("An error occurred when trying to read the request body", ex);
@@ -114,7 +110,6 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                     methodArgs = jsonProcessor.processParamsIntoMethodArguments(executionContext);
                     if (methodArgs == null) {
                         log.error("Expected params of type JSON array or object, but was: {}", executionContext.getRequest().getParams());
-                        returnResponse = true;
                         response.setError(JsonRpcResponse.Error.invalidRequest());
                     }
                 } catch (Exception ex) {
@@ -152,9 +147,7 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
             }
         }
 
-        if (!returnResponse) {
-            httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
-        } else {
+        if (executionContext.hasId() || response.hasPreExecutionErrorCode()) {
             try {
                 httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
@@ -164,6 +157,8 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                 log.error("An error has occurred while trying to write the response body", ex);
                 httpResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
+        } else {
+            httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
         }
     }
 

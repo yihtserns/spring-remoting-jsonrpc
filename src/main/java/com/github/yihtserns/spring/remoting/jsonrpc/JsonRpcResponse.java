@@ -19,7 +19,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -28,11 +31,19 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 @Setter
 public class JsonRpcResponse {
 
+    private static final Set<Integer> PRE_EXECUTION_ERROR_CODES = new HashSet<>(Arrays.asList(
+            Error.parseError().getCode(),
+            Error.invalidRequest().getCode()));
+
     private String jsonrpc = "2.0";
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<String> id;
     private Object result;
     private Error error;
+
+    public boolean hasPreExecutionErrorCode() {
+        return error != null && PRE_EXECUTION_ERROR_CODES.contains(error.getCode());
+    }
 
     @JsonInclude(Include.NON_NULL)
     @Getter
