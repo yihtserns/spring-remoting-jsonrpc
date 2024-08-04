@@ -17,66 +17,113 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import javax.annotation.Nullable;
 import java.util.Optional;
-import java.util.Set;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
 @Getter
-@Setter
 public class JsonRpcResponse {
 
-    private static final Set<Integer> PRE_EXECUTION_ERROR_CODES = new HashSet<>(Arrays.asList(
-            Error.parseError().getCode(),
-            Error.invalidRequest().getCode()));
-
-    private String jsonrpc = "2.0";
+    private final String jsonrpc = "2.0";
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Optional<String> id;
-    private Object result;
-    private Error error;
+    private final Optional<String> id;
+    private final Object result;
+    private final Error error;
 
-    public boolean hasPreExecutionErrorCode() {
-        return error != null && PRE_EXECUTION_ERROR_CODES.contains(error.getCode());
+    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id, Object result) {
+        this.id = id;
+        this.result = result;
+        this.error = null;
+    }
+
+    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id, Error error) {
+        this.id = id;
+        this.result = null;
+        this.error = error;
+    }
+
+    /**
+     * @return {@code null} if the given Request is a
+     * <a href="https://www.jsonrpc.org/specification#notification">Notification</a>.
+     */
+    @Nullable
+    public static JsonRpcResponse success(Object result, JsonRpcRequest<?> request) {
+        if (request.isNotification()) {
+            return null;
+        }
+        return new JsonRpcResponse(Optional.of(request.getId()), result);
+    }
+
+    /**
+     * @return {@code null} if the given Request is a
+     * <a href="https://www.jsonrpc.org/specification#notification">Notification</a>.
+     */
+    @Nullable
+    public static JsonRpcResponse failure(Error error, @Nullable JsonRpcRequest<?> request) {
+        if (request == null) { // Failed when trying to read the Request
+            // Sending back an 'id' field with 'null' value because https://www.jsonrpc.org/specification#response_object says:
+            // > If there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request), it MUST be Null.
+            return new JsonRpcResponse(Optional.empty(), error);
+        }
+        if (error.alwaysRespond) {
+            return new JsonRpcResponse(Optional.ofNullable(request.getId()), error);
+        }
+        if (request.isNotification()) {
+            return null;
+        }
+        return new JsonRpcResponse(Optional.of(request.getId()), error);
     }
 
     @JsonInclude(Include.NON_NULL)
-    @Getter
+    @ToString
     public static class Error {
 
-        private int code;
-        private String message;
-        @Setter
-        private Object data;
+        @Getter
+        private final int code;
+        @Getter
+        private final String message;
+        @Nullable
+        private final Object data;
 
-        public Error(int code, String message) {
+        private boolean alwaysRespond = false;
+
+        public Error(int code, String message, Object data) {
             this.code = code;
             this.message = message;
+            this.data = data;
+        }
+
+        public Error(int code, String message) {
+            this(code, message, null);
+        }
+
+        private Error(int code, String message, boolean alwaysRespond) {
+            this(code, message, null);
+            this.alwaysRespond = alwaysRespond;
         }
 
         public static Error methodNotFound() {
-            return new Error(-32601, "Method not found");
+            return new Error(-32601, "Method not found", false);
         }
 
         public static Error invalidParams() {
-            return new Error(-32602, "Invalid params");
+            return new Error(-32602, "Invalid params", false);
         }
 
         public static Error internalError() {
-            return new Error(-32603, "Internal error");
+            return new Error(-32603, "Internal error", false);
         }
 
         public static Error invalidRequest() {
-            return new Error(-32600, "Invalid Request");
+            return new Error(-32600, "Invalid Request", true);
         }
 
         public static Error parseError() {
-            return new Error(-32700, "Parse error");
+            return new Error(-32700, "Parse error", true);
         }
     }
 }

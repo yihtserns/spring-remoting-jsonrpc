@@ -26,4 +26,8 @@ public class JsonRpcRequest<P> {
     private String id;
     private String method;
     private P params;
+
+    public boolean isNotification() {
+        return id == null;
+    }
 }

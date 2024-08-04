@@ -429,6 +429,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         then:
         response.body == [
                 jsonrpc: "2.0",
+                id     : null,
                 error  : [
                         code   : -32700,
                         message: "Parse error"
@@ -546,11 +547,18 @@ class JsonRpcServiceExporterSpecification extends Specification {
         "nonExistentMethod" | []
     }
 
+    /**
+     * In <a href="https://www.jsonrpc.org/specification#response_object">Response object</a> spec, it says:
+     * <p>
+     * > If there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request), it MUST be Null.
+     * </p>
+     */
     def "should return error when the request is incorrect, even if it does not have an id"() {
         expect:
         with(requestCalc('{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]')) {
             body == [
                     jsonrpc: "2.0",
+                    id     : null,
                     error  : [
                             code   : -32700,
                             message: "Parse error"

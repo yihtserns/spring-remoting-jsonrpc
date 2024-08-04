@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.HttpRequestHandler;
 
+import javax.annotation.Nullable;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -31,7 +32,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingBean {
@@ -79,75 +79,114 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
     @Override
     public void handleRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         ExecutionContext executionContext = new ExecutionContext();
-        JsonRpcResponse response = new JsonRpcResponse();
+        try {
+            JsonRpcRequest<?> request = readJsonRpcRequest(httpRequest);
+            executionContext.request = request;
 
+            ServiceMethod serviceMethod = getServiceMethod(request);
+            executionContext.serviceInterfaceMethod = serviceMethod.interfaceMethod;
+            executionContext.serviceImplementationMethod = serviceMethod.implementationMethod;
+
+            Object result = executeMethod(convertParamsIntoMethodArguments(executionContext), executionContext);
+
+            writeJsonRpcResponse(JsonRpcResponse.success(result, request), httpResponse);
+        } catch (ExecutionException ex) {
+            log.error("Execution failed with error: {} - {}", ex.error.getCode(), ex.error.getMessage(), ex);
+
+            writeJsonRpcResponse(JsonRpcResponse.failure(ex.error, executionContext.getRequest()), httpResponse);
+        } catch (RuntimeException ex) {
+            log.error("Execution failed with unexpected error", ex);
+
+            writeJsonRpcResponse(
+                    JsonRpcResponse.failure(JsonRpcResponse.Error.internalError(), executionContext.getRequest()),
+                    httpResponse);
+        }
+    }
+
+    private JsonRpcRequest<?> readJsonRpcRequest(HttpServletRequest httpRequest) throws ExecutionException {
+        JsonRpcRequest<?> request;
         try {
             ServletInputStream inputStream = httpRequest.getInputStream();
-            executionContext.request = jsonProcessor.processRequest(inputStream);
-            response.setId(Optional.ofNullable(executionContext.getRequest().getId()));
 
-            if (executionContext.getRequest().getMethod() == null) {
-                response.setError(JsonRpcResponse.Error.invalidRequest());
-                executionContext.request = null;
-            } else {
-                ServiceMethod serviceMethod = name2Method.get(executionContext.getRequest().getMethod());
-                if (serviceMethod != null) {
-                    executionContext.serviceInterfaceMethod = serviceMethod.interfaceMethod;
-                    executionContext.serviceImplementationMethod = serviceMethod.implementationMethod;
-                }
-            }
+            request = jsonProcessor.processRequest(inputStream);
         } catch (Exception ex) {
-            log.debug("An error occurred when trying to read the request body", ex);
-            response.setError(JsonRpcResponse.Error.parseError());
+            throw new ExecutionException(JsonRpcResponse.Error.parseError(), "An error occurred when trying to read the request body", ex);
+        }
+        return request;
+    }
+
+    private ServiceMethod getServiceMethod(JsonRpcRequest<?> request) throws ExecutionException {
+        if (request.getMethod() == null) {
+            throw new ExecutionException(JsonRpcResponse.Error.invalidRequest(), "Request has empty 'method' field");
         }
 
-        if (executionContext.getRequest() != null) {
-            if (executionContext.getServiceInterfaceMethod() == null) {
-                response.setError(JsonRpcResponse.Error.methodNotFound());
-            } else {
-                List<Object> methodArgs;
-                try {
-                    methodArgs = jsonProcessor.processParamsIntoMethodArguments(executionContext);
-                    if (methodArgs == null) {
-                        log.error("Expected params of type JSON array or object, but was: {}", executionContext.getRequest().getParams());
-                        response.setError(JsonRpcResponse.Error.invalidRequest());
-                    }
-                } catch (Exception ex) {
-                    methodArgs = null;
-                    log.error("An error has occurred while creating arguments for method: {}", executionContext.getServiceInterfaceMethod(), ex);
-                    response.setError(JsonRpcResponse.Error.invalidParams());
-                }
+        ServiceMethod serviceMethod = name2Method.get(request.getMethod());
+        if (serviceMethod == null) {
+            throw new ExecutionException(
+                    JsonRpcResponse.Error.methodNotFound(),
+                    String.format("Service Interface [%s] does not have method named: %s",
+                            serviceInterface,
+                            request.getMethod()));
+        }
 
-                if (methodArgs != null) {
-                    if (methodArgs.size() != executionContext.getServiceInterfaceMethod().getParameterCount()) {
-                        log.error("Expecting params of length {} as arguments for method {}, but was {}",
-                                executionContext.getServiceInterfaceMethod().getParameterCount(),
-                                executionContext.getServiceInterfaceMethod(),
-                                methodArgs.size());
-                        response.setError(JsonRpcResponse.Error.invalidParams());
-                    } else {
-                        try {
-                            response.setResult(executionContext.getServiceInterfaceMethod().invoke(service, methodArgs.toArray()));
-                        } catch (InvocationTargetException ex) {
-                            JsonRpcResponse.Error error = exceptionHandler.handleException(ex.getCause(), executionContext);
-                            if (error.getCode() <= -32000 && error.getCode() >= -32768) {
-                                log.error("Exception [{}] was converted into Error object using a reserved error code: {}",
-                                        ex.getCause(),
-                                        error.getCode());
+        return serviceMethod;
+    }
 
-                                error = JsonRpcResponse.Error.internalError();
-                            }
-                            response.setError(error);
-                        } catch (IllegalAccessException | RuntimeException ex) {
-                            log.error("Failed to call method: {}", executionContext.getRequest().getMethod(), ex);
-                            response.setError(JsonRpcResponse.Error.internalError());
-                        }
-                    }
-                }
+    private List<Object> convertParamsIntoMethodArguments(ExecutionContext executionContext) throws ExecutionException {
+        List<Object> methodArgs;
+        try {
+            methodArgs = jsonProcessor.processParamsIntoMethodArguments(executionContext);
+        } catch (Exception ex) {
+            throw new ExecutionException(
+                    JsonRpcResponse.Error.invalidParams(),
+                    "An error has occurred while creating arguments for method: " + executionContext.getServiceInterfaceMethod(),
+                    ex);
+        }
+
+        if (methodArgs == null) {
+            throw new ExecutionException(
+                    JsonRpcResponse.Error.invalidRequest(),
+                    "Expected params of type JSON array or object, but was: " + executionContext.getRequest().getParams());
+        }
+        return methodArgs;
+    }
+
+    private Object executeMethod(List<Object> methodArgs, ExecutionContext executionContext) throws ExecutionException {
+        Method method = executionContext.getServiceInterfaceMethod();
+
+        if (methodArgs.size() != method.getParameterCount()) {
+            throw new ExecutionException(
+                    JsonRpcResponse.Error.invalidParams(),
+                    String.format("Expecting params of length %s as arguments for method %s, but was %s",
+                            method.getParameterCount(),
+                            method,
+                            methodArgs.size()));
+        }
+
+        try {
+            return method.invoke(service, methodArgs.toArray());
+        } catch (InvocationTargetException ex) {
+            JsonRpcResponse.Error error = exceptionHandler.handleException(ex.getCause(), executionContext);
+            if (error.getCode() <= -32000 && error.getCode() >= -32768) {
+                throw new ExecutionException(
+                        JsonRpcResponse.Error.internalError(),
+                        String.format("Exception [%s] was converted into Error object using a reserved error code: %s",
+                                ex.getCause(),
+                                error));
             }
+            throw new ExecutionException(error, "Failed to call method: " + executionContext.getServiceImplementationMethod(), ex);
+        } catch (IllegalAccessException | RuntimeException ex) {
+            throw new ExecutionException(
+                    JsonRpcResponse.Error.internalError(),
+                    "Failed to call method: " + executionContext.getServiceImplementationMethod(),
+                    ex);
         }
+    }
 
-        if (executionContext.hasId() || response.hasPreExecutionErrorCode()) {
+    private void writeJsonRpcResponse(@Nullable JsonRpcResponse response, HttpServletResponse httpResponse) {
+        if (response == null) {
+            httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
+        } else {
             try {
                 httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
@@ -157,8 +196,6 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
                 log.error("An error has occurred while trying to write the response body", ex);
                 httpResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
-        } else {
-            httpResponse.setStatus(HttpStatus.NO_CONTENT.value());
         }
     }
 
@@ -170,6 +207,21 @@ public class JsonRpcServiceExporter implements HttpRequestHandler, InitializingB
         public ServiceMethod(Method interfaceMethod, Method implementationMethod) {
             this.interfaceMethod = interfaceMethod;
             this.implementationMethod = implementationMethod;
+        }
+    }
+
+    private static class ExecutionException extends Exception {
+
+        final JsonRpcResponse.Error error;
+
+        public ExecutionException(JsonRpcResponse.Error error, String message, Throwable cause) {
+            super(message, cause);
+            this.error = error;
+        }
+
+        public ExecutionException(JsonRpcResponse.Error error, String message) {
+            super(message);
+            this.error = error;
         }
     }
 }
