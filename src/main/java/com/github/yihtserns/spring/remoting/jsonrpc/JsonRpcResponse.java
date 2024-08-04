@@ -15,16 +15,12 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.ToString;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-@JsonInclude(Include.NON_NULL)
 @Getter
 public class JsonRpcResponse {
 
@@ -78,7 +74,6 @@ public class JsonRpcResponse {
         return new JsonRpcResponse(Optional.of(request.getId()), error);
     }
 
-    @JsonInclude(Include.NON_NULL)
     @ToString
     public static class Error {
 

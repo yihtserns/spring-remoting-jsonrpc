@@ -5,6 +5,7 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc.jackson;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,7 +46,7 @@ public class JacksonJsonProcessor implements JsonProcessor {
     /**
      * @see #from(ObjectMapper)
      */
-    public JacksonJsonProcessor(ObjectReader reader, ObjectWriter writer) {
+    private JacksonJsonProcessor(ObjectReader reader, ObjectWriter writer) {
         this.reader = reader;
         this.writer = writer;
     }
@@ -105,10 +106,11 @@ public class JacksonJsonProcessor implements JsonProcessor {
         writer.writeValue(outputStream, response);
     }
 
-    public static JacksonJsonProcessor from(ObjectMapper objectMapper) {
-        return new JacksonJsonProcessor(
-                // KLUDGE: Explicitly setting FAIL_ON_UNKNOWN_PROPERTIES because it wasn't activated even though the default=true!
-                objectMapper.reader(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES),
-                objectMapper.writer());
+    public static JacksonJsonProcessor from(ObjectMapper objectMapperPrototype) {
+        ObjectMapper objectMapper = objectMapperPrototype.copy()
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) // KLUDGE: Spring/Boot set FAIL_ON_UNKNOWN_PROPERTIES to false by default
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        return new JacksonJsonProcessor(objectMapper.reader(), objectMapper.writer());
     }
 }
