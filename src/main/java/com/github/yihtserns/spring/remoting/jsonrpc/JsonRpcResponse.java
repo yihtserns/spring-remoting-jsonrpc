@@ -30,13 +30,15 @@ public class JsonRpcResponse {
     private final Object result;
     private final Error error;
 
-    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id, Object result) {
+    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id,
+                            Object result) {
         this.id = id;
         this.result = result;
         this.error = null;
     }
 
-    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id, Error error) {
+    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id,
+                            Error error) {
         this.id = id;
         this.result = null;
         this.error = error;
@@ -51,7 +53,7 @@ public class JsonRpcResponse {
         if (request.isNotification()) {
             return null;
         }
-        return new JsonRpcResponse(Optional.of(request.getId()), result);
+        return new JsonRpcResponse(request.getId(), result);
     }
 
     /**
@@ -65,13 +67,15 @@ public class JsonRpcResponse {
             // > If there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request), it MUST be Null.
             return new JsonRpcResponse(Optional.empty(), error);
         }
-        if (error.alwaysRespond) {
-            return new JsonRpcResponse(Optional.ofNullable(request.getId()), error);
-        }
         if (request.isNotification()) {
+            if (error.alwaysRespond) {
+                // Sending back an 'id' field with 'null' value because https://www.jsonrpc.org/specification#response_object says:
+                // > If there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request), it MUST be Null.
+                return new JsonRpcResponse(Optional.empty(), error);
+            }
             return null;
         }
-        return new JsonRpcResponse(Optional.of(request.getId()), error);
+        return new JsonRpcResponse(request.getId(), error);
     }
 
     @ToString

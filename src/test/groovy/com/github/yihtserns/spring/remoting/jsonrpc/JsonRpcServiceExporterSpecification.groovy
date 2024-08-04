@@ -42,7 +42,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "can call using no params for method with 0-arg"() {
         when:
-        String id = UUID.randomUUID()
+        String id = randomUUID()
         def response = callCalc(new Request(
                 id: id,
                 method: "returnInt",
@@ -64,7 +64,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail when params is sent for method with 0-arg"() {
         when:
-        String id = UUID.randomUUID()
+        String id = randomUUID()
         def response = callCalc(new Request(
                 id: id,
                 method: "returnInt",
@@ -89,7 +89,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "can call using params of int array"() {
         when:
-        String id = UUID.randomUUID()
+        String id = randomUUID()
         def response = callCalc(new Request(
                 id: id,
                 method: "subtractArray",
@@ -105,7 +105,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail when params array size is not the same as the method parameters count"() {
         when:
-        String id = UUID.randomUUID()
+        String id = randomUUID()
         def response = callCalc(new Request(id: id, method: "subtractArray", params: params))
 
         then:
@@ -128,7 +128,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "can call using params of object"() {
         when:
-        String id = UUID.randomUUID()
+        String id = randomUUID()
         def response = callCalc(new Request(
                 id: id,
                 method: "subtractObject",
@@ -144,7 +144,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail when object params is sent to method with more than 1 parameter"() {
         when:
-        String id = UUID.randomUUID()
+        String id = randomUUID()
         def response = callCalc(new Request(
                 id: id,
                 method: "subtractObjectTwoParams",
@@ -161,9 +161,30 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
+    def "can call using null id"() {
+        when:
+        def response = callCalc(new Request(
+                id: Optional.<String> empty(),
+                method: method,
+                params: params))
+
+        then:
+        response == [
+                jsonrpc: "2.0",
+                id     : null,
+                result : result
+        ]
+
+        where:
+        method           | params                           | result
+        "returnInt"      | null                             | 999
+        "subtractArray"  | [10, 3]                          | 10 - 3
+        "subtractObject" | [firstValue: 10, secondValue: 3] | 10 - 3
+    }
+
     def "supported array params data types"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: method, params: [paramValue])
+        def request = new Request(id: randomUUID(), method: method, params: [paramValue])
 
         when:
         def response = callCalc(request)
@@ -243,7 +264,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "supported object params data types, via Jackson JSON"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: "returnObjectArg", params: [(paramName): paramValue])
+        def request = new Request(id: randomUUID(), method: "returnObjectArg", params: [(paramName): paramValue])
 
         when:
         def response = callCalc(request)
@@ -332,7 +353,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "supported empty object params"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: "returnObjectArg", params: [:])
+        def request = new Request(id: randomUUID(), method: "returnObjectArg", params: [:])
 
         when:
         def response = callCalc(request)
@@ -348,7 +369,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail with invalid params error when array params contains incompatible value"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: method, params: [paramValue])
+        def request = new Request(id: randomUUID(), method: method, params: [paramValue])
 
         when:
         def response = callCalc(request)
@@ -382,7 +403,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail with invalid params error when object params contains incorrect parameter name"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: "returnObjectArg", params: ["nonExistentParam": 1])
+        def request = new Request(id: randomUUID(), method: "returnObjectArg", params: ["nonExistentParam": 1])
 
         when:
         def response = callCalc(request)
@@ -400,7 +421,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should fail with internal error when method throws exception"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: method, params: [])
+        def request = new Request(id: randomUUID(), method: method, params: [])
 
         when:
         def response = callCalc(request)
@@ -456,7 +477,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
         then:
         response.body == [
                 jsonrpc: "2.0",
-                id     : invalidRequest.hasProperty("id") ? invalidRequest.id : null,
+                id     : expectedId,
                 error  : [
                         code   : -32600,
                         message: "Invalid Request"
@@ -464,16 +485,16 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
 
         where:
-        invalidRequest << [
-                new Request(id: UUID.randomUUID(), method: "returnStringArg", params: "invalid params data type"),
-                new Request(),
-                "{}",
-        ]
+        invalidRequest                                                                                   | expectedId
+        new Request(id: randomUUID(), method: "returnStringArg", params: "invalid params data type")     | invalidRequest.id
+        new Request(id: Optional.empty(), method: "returnStringArg", params: "invalid params data type") | null
+        new Request()                                                                                    | null
+        "{}"                                                                                             | null
     }
 
     def "can use custom converter to transform a specific exception into error object"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: "throwCustomApplicationException", params: [errorCode])
+        def request = new Request(id: randomUUID(), method: "throwCustomApplicationException", params: [errorCode])
 
         when:
         def responseWithCustomErrorObject = callCalc(request)
@@ -500,7 +521,7 @@ class JsonRpcServiceExporterSpecification extends Specification {
 
     def "should return internal error if custom converter produces error object that uses reserved error code"() {
         given:
-        def request = new Request(id: UUID.randomUUID(), method: "throwCustomApplicationException", params: [reservedErrorCode])
+        def request = new Request(id: randomUUID(), method: "throwCustomApplicationException", params: [reservedErrorCode])
 
         when:
         def responseWithCustomErrorObject = callCalc(request)
@@ -632,6 +653,10 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 Map)
     }
 
+    private static String randomUUID() {
+        return UUID.randomUUID().toString()
+    }
+
     @Configuration
     @EnableAutoConfiguration
     static class Application {
@@ -660,7 +685,8 @@ class JsonRpcServiceExporterSpecification extends Specification {
     static class Request {
 
         final String jsonrpc = "2.0"
-        String id
+        @JsonInclude(Include.NON_NULL)
+        Object id
         String method
         @JsonInclude(Include.NON_NULL)
         Object params

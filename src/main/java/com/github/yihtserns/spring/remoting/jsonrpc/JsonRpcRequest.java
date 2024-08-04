@@ -18,16 +18,22 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.annotation.Nullable;
+import java.util.Optional;
+
 @Getter
 @Setter
 public class JsonRpcRequest<P> {
 
     private String jsonrpc;
-    private String id;
+    @Nullable
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private Optional<String> id;
     private String method;
     private P params;
 
     public boolean isNotification() {
+        //noinspection OptionalAssignedToNull
         return id == null;
     }
 }

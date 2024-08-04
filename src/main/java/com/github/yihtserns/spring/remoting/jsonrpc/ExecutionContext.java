@@ -18,8 +18,4 @@ public class ExecutionContext {
     JsonRpcRequest<?> request;
     Method serviceInterfaceMethod;
     Method serviceImplementationMethod;
-
-    public boolean hasId() {
-        return request != null && request.getId() != null;
-    }
 }
