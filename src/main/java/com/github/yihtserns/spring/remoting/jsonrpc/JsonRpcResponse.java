@@ -19,26 +19,24 @@ import lombok.Getter;
 import lombok.ToString;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Getter
 public class JsonRpcResponse {
 
     private final String jsonrpc = "2.0";
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private final Optional<String> id;
+    private final Id id;
     private final Object result;
     private final Error error;
 
-    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id,
-                            Object result) {
+    private JsonRpcResponse(Id id, Object result) {
         this.id = id;
         this.result = result;
         this.error = null;
     }
 
-    private JsonRpcResponse(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> id,
-                            Error error) {
+    private JsonRpcResponse(Id id, Error error) {
         this.id = id;
         this.result = null;
         this.error = error;
@@ -49,11 +47,11 @@ public class JsonRpcResponse {
      * <a href="https://www.jsonrpc.org/specification#notification">Notification</a>.
      */
     @Nullable
-    public static JsonRpcResponse success(Object result, JsonRpcRequest<?> request) {
-        if (request.isNotification()) {
-            return null;
-        }
-        return new JsonRpcResponse(request.getId(), result);
+    static JsonRpcResponse success(Object result, JsonRpcRequest<?> request) {
+        return request.getId().map(
+                id -> new JsonRpcResponse(Id.valueOf(id), result),
+                () -> new JsonRpcResponse(Id.nullValue(), result),
+                () -> null);
     }
 
     /**
@@ -61,21 +59,53 @@ public class JsonRpcResponse {
      * <a href="https://www.jsonrpc.org/specification#notification">Notification</a>.
      */
     @Nullable
-    public static JsonRpcResponse failure(Error error, @Nullable JsonRpcRequest<?> request) {
+    static JsonRpcResponse failure(Error error, @Nullable JsonRpcRequest<?> request) {
         if (request == null) { // Failed when trying to read the Request
             // Sending back an 'id' field with 'null' value because https://www.jsonrpc.org/specification#response_object says:
             // > If there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request), it MUST be Null.
-            return new JsonRpcResponse(Optional.empty(), error);
+            return new JsonRpcResponse(Id.nullValue(), error);
         }
-        if (request.isNotification()) {
-            if (error.alwaysRespond) {
-                // Sending back an 'id' field with 'null' value because https://www.jsonrpc.org/specification#response_object says:
-                // > If there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request), it MUST be Null.
-                return new JsonRpcResponse(Optional.empty(), error);
+        return request.getId().map(
+                id -> new JsonRpcResponse(Id.valueOf(id), error),
+                () -> new JsonRpcResponse(Id.nullValue(), error),
+                () -> {
+                    if (error.alwaysRespond) {
+                        // Sending back an 'id' field with 'null' value because https://www.jsonrpc.org/specification#response_object says:
+                        // > If there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request), it MUST be Null.
+                        return new JsonRpcResponse(Id.nullValue(), error);
+                    }
+                    return null;
+                });
+    }
+
+    public static class Id {
+
+        private final String value;
+
+        private Id(String value) {
+            this.value = value;
+        }
+
+        public <T> T map(Function<String, T> valueMapper, Supplier<T> nullValueMapper) {
+            if (value == null) {
+                return nullValueMapper.get();
             }
-            return null;
+            return valueMapper.apply(value);
         }
-        return new JsonRpcResponse(request.getId(), error);
+
+        /**
+         * @see #nullValue()
+         */
+        public static Id valueOf(String value) {
+            if (value == null) {
+                throw new IllegalArgumentException("'value' cannot be null!");
+            }
+            return new Id(value);
+        }
+
+        public static Id nullValue() {
+            return new Id(null);
+        }
     }
 
     @ToString

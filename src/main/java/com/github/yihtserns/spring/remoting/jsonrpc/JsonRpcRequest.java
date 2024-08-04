@@ -18,22 +18,55 @@ package com.github.yihtserns.spring.remoting.jsonrpc;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.annotation.Nullable;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Getter
 @Setter
 public class JsonRpcRequest<P> {
 
     private String jsonrpc;
-    @Nullable
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Optional<String> id;
+    private Id id = Id.absent();
     private String method;
     private P params;
 
-    public boolean isNotification() {
-        //noinspection OptionalAssignedToNull
-        return id == null;
+    public static class Id {
+
+        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+        private final Optional<String> value;
+
+        private Id(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> value) {
+            this.value = value;
+        }
+
+        public <T> T map(Function<String, T> valueMapper,
+                         Supplier<T> nullValueMapper,
+                         Supplier<T> absentValueMapper) {
+
+            //noinspection OptionalAssignedToNull
+            if (value == null) {
+                return absentValueMapper.get();
+            }
+            return value.map(valueMapper).orElseGet(nullValueMapper);
+        }
+
+        /**
+         * @see #nullValue()
+         */
+        public static Id valueOf(String value) {
+            if (value == null) {
+                throw new IllegalArgumentException("'value' must not be null!");
+            }
+            return new Id(Optional.of(value));
+        }
+
+        public static Id nullValue() {
+            return new Id(Optional.empty());
+        }
+
+        public static Id absent() {
+            return new Id(null);
+        }
     }
 }

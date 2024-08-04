@@ -6,14 +6,21 @@
 package com.github.yihtserns.spring.remoting.jsonrpc.jackson;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.github.yihtserns.spring.remoting.jsonrpc.ExecutionContext;
 import com.github.yihtserns.spring.remoting.jsonrpc.JsonProcessor;
 import com.github.yihtserns.spring.remoting.jsonrpc.JsonRpcRequest;
@@ -107,10 +114,52 @@ public class JacksonJsonProcessor implements JsonProcessor {
     }
 
     public static JacksonJsonProcessor from(ObjectMapper objectMapperPrototype) {
+        SimpleModule adhocModule = new SimpleModule();
+        adhocModule.addDeserializer(JsonRpcRequest.Id.class, new JsonRpcRequestIdDeserializer());
+        adhocModule.addSerializer(JsonRpcResponse.Id.class, new JsonRpcResponseIdSerializer());
+
         ObjectMapper objectMapper = objectMapperPrototype.copy()
                 .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) // KLUDGE: Spring/Boot set FAIL_ON_UNKNOWN_PROPERTIES to false by default
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                .registerModule(adhocModule);
 
         return new JacksonJsonProcessor(objectMapper.reader(), objectMapper.writer());
+    }
+
+    private static class JsonRpcRequestIdDeserializer extends StdDeserializer<JsonRpcRequest.Id> {
+
+        protected JsonRpcRequestIdDeserializer() {
+            super(JsonRpcRequest.Id.class);
+        }
+
+        @Override
+        public JsonRpcRequest.Id deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+            if (parser.hasToken(JsonToken.VALUE_STRING)) {
+                return JsonRpcRequest.Id.valueOf(parser.getText());
+            }
+            return (JsonRpcRequest.Id) context.handleUnexpectedToken(JsonRpcRequest.Id.class, parser);
+        }
+
+        @Override
+        public JsonRpcRequest.Id getNullValue(DeserializationContext ctxt) {
+            return JsonRpcRequest.Id.nullValue();
+        }
+    }
+
+    private static class JsonRpcResponseIdSerializer extends StdSerializer<JsonRpcResponse.Id> {
+
+        protected JsonRpcResponseIdSerializer() {
+            super(JsonRpcResponse.Id.class);
+        }
+
+        @Override
+        public void serialize(JsonRpcResponse.Id id, JsonGenerator generator, SerializerProvider provider) throws IOException {
+            String v = id.map(value -> value, () -> null);
+            if (v == null) {
+                generator.writeNull();
+            } else {
+                generator.writeString(v);
+            }
+        }
     }
 }
