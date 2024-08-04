@@ -154,12 +154,14 @@ public class JacksonJsonProcessor implements JsonProcessor {
 
         @Override
         public void serialize(JsonRpcResponse.Id id, JsonGenerator generator, SerializerProvider provider) throws IOException {
-            String v = id.map(value -> value, () -> null);
-            if (v == null) {
-                generator.writeNull();
-            } else {
-                generator.writeString(v);
-            }
+            id.map(value -> {
+                        generator.writeString(value);
+                        return null;
+                    },
+                    () -> {
+                        generator.writeNull();
+                        return null;
+                    });
         }
     }
 }

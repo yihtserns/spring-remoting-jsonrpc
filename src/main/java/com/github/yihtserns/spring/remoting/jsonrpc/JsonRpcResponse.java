@@ -15,12 +15,12 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
+import com.github.yihtserns.spring.remoting.jsonrpc.function.ThrowableFunction;
+import com.github.yihtserns.spring.remoting.jsonrpc.function.ThrowableSupplier;
 import lombok.Getter;
 import lombok.ToString;
 
 import javax.annotation.Nullable;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 @Getter
 public class JsonRpcResponse {
@@ -86,7 +86,9 @@ public class JsonRpcResponse {
             this.value = value;
         }
 
-        public <T> T map(Function<String, T> valueMapper, Supplier<T> nullValueMapper) {
+        public <T, E extends Exception> T map(ThrowableFunction<String, T, E> valueMapper,
+                                              ThrowableSupplier<T, E> nullValueMapper) throws E {
+
             if (value == null) {
                 return nullValueMapper.get();
             }
