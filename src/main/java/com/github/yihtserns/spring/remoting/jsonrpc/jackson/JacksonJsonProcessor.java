@@ -117,6 +117,7 @@ public class JacksonJsonProcessor implements JsonProcessor {
         SimpleModule adhocModule = new SimpleModule();
         adhocModule.addDeserializer(JsonRpcRequest.Id.class, new JsonRpcRequestIdDeserializer());
         adhocModule.addSerializer(JsonRpcResponse.Id.class, new JsonRpcResponseIdSerializer());
+        adhocModule.addSerializer(JsonRpcResponse.class, new JsonRpcResponseSerializer());
 
         ObjectMapper objectMapper = objectMapperPrototype.copy()
                 .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) // KLUDGE: Spring/Boot set FAIL_ON_UNKNOWN_PROPERTIES to false by default
@@ -169,6 +170,32 @@ public class JacksonJsonProcessor implements JsonProcessor {
                         generator.writeNull();
                         return null;
                     });
+        }
+    }
+
+    private static class JsonRpcResponseSerializer extends StdSerializer<JsonRpcResponse> {
+
+        protected JsonRpcResponseSerializer() {
+            super(JsonRpcResponse.class);
+        }
+
+        @Override
+        public void serialize(JsonRpcResponse response, JsonGenerator generator, SerializerProvider provider) throws IOException {
+            generator.writeStartObject();
+
+            generator.writeStringField("jsonrpc", response.getJsonrpc());
+            generator.writeObjectField("id", response.getId());
+            response.getResult().map(
+                    result -> {
+                        generator.writeObjectField("result", result);
+                        return null;
+                    },
+                    error -> {
+                        generator.writeObjectField("error", error);
+                        return null;
+                    });
+
+            generator.writeEndObject();
         }
     }
 }

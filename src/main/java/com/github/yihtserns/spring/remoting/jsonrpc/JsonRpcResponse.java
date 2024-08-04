@@ -15,8 +15,9 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
-import com.github.yihtserns.spring.remoting.jsonrpc.function.ThrowableFunction;
-import com.github.yihtserns.spring.remoting.jsonrpc.function.ThrowableSupplier;
+import com.github.yihtserns.spring.remoting.jsonrpc.util.Either;
+import com.github.yihtserns.spring.remoting.jsonrpc.util.ThrowableFunction;
+import com.github.yihtserns.spring.remoting.jsonrpc.util.ThrowableSupplier;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -27,19 +28,16 @@ public class JsonRpcResponse {
 
     private final String jsonrpc = "2.0";
     private final Id id;
-    private final Object result;
-    private final Error error;
+    private final Either<Object, Error> result;
 
     private JsonRpcResponse(Id id, Object result) {
         this.id = id;
-        this.result = result;
-        this.error = null;
+        this.result = Either.left(result);
     }
 
     private JsonRpcResponse(Id id, Error error) {
         this.id = id;
-        this.result = null;
-        this.error = error;
+        this.result = Either.right(error);
     }
 
     /**

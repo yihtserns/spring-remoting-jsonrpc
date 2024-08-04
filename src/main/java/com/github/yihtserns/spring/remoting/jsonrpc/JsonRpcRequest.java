@@ -15,8 +15,8 @@
  */
 package com.github.yihtserns.spring.remoting.jsonrpc;
 
-import com.github.yihtserns.spring.remoting.jsonrpc.function.ThrowableFunction;
-import com.github.yihtserns.spring.remoting.jsonrpc.function.ThrowableSupplier;
+import com.github.yihtserns.spring.remoting.jsonrpc.util.ThrowableFunction;
+import com.github.yihtserns.spring.remoting.jsonrpc.util.ThrowableSupplier;
 import lombok.Getter;
 import lombok.Setter;
 

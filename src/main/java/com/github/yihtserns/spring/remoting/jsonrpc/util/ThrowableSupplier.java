@@ -3,13 +3,13 @@
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  * PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
-package com.github.yihtserns.spring.remoting.jsonrpc.function;
+package com.github.yihtserns.spring.remoting.jsonrpc.util;
 
 /**
  * @author yihtserns
  */
 @FunctionalInterface
-public interface ThrowableFunction<F, T, E extends Exception> {
+public interface ThrowableSupplier<T, E extends Exception> {
 
-    T apply(F from) throws E;
+    T get() throws E;
 }
