@@ -34,13 +34,14 @@ public class JsonRpcRequest<P> {
     public static class Id {
 
         @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-        private final Optional<String> value;
+        private final Optional<Object> value;
 
-        private Id(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> value) {
+        private Id(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<Object> value) {
             this.value = value;
         }
 
-        public <T, E extends Exception> T map(ThrowableFunction<String, T, E> valueMapper,
+        public <T, E extends Exception> T map(ThrowableFunction<String, T, E> stringValueMapper,
+                                              ThrowableFunction<Integer, T, E> numberValueMapper,
                                               ThrowableSupplier<T, E> nullValueMapper,
                                               ThrowableSupplier<T, E> absentValueMapper) throws E {
 
@@ -51,7 +52,14 @@ public class JsonRpcRequest<P> {
             if (!value.isPresent()) {
                 return nullValueMapper.get();
             }
-            return valueMapper.apply(value.get());
+            Object v = value.get();
+            if (v instanceof String) {
+                return stringValueMapper.apply((String) v);
+            }
+            if (v instanceof Integer) {
+                return numberValueMapper.apply((Integer) v);
+            }
+            throw new UnsupportedOperationException("Unhandled value type: " + v);
         }
 
         /**
@@ -61,6 +69,10 @@ public class JsonRpcRequest<P> {
             if (value == null) {
                 throw new IllegalArgumentException("'value' must not be null!");
             }
+            return new Id(Optional.of(value));
+        }
+
+        public static Id valueOf(int value) {
             return new Id(Optional.of(value));
         }
 

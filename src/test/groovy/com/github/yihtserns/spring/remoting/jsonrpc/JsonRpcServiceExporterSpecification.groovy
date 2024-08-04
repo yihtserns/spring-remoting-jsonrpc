@@ -161,19 +161,24 @@ class JsonRpcServiceExporterSpecification extends Specification {
         ]
     }
 
-    def "can call using null id"() {
-        when:
-        def response = callCalc(new Request(
-                id: Optional.<String> empty(),
-                method: method,
-                params: params))
+    def "can call using non-string id"() {
+        expect: "can use `null` id"
+        with(callCalc(new Request(id: Optional.<String> empty(), method: method, params: params))) { response ->
+            response == [
+                    jsonrpc: "2.0",
+                    id     : null,
+                    result : result
+            ]
+        }
 
-        then:
-        response == [
-                jsonrpc: "2.0",
-                id     : null,
-                result : result
-        ]
+        and: "can use number (integer) id"
+        with(callCalc(new Request(id: 5, method: method, params: params))) { response ->
+            response == [
+                    jsonrpc: "2.0",
+                    id     : 5,
+                    result : result
+            ]
+        }
 
         where:
         method           | params                           | result

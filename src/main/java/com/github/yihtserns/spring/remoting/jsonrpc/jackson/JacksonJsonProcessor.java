@@ -137,6 +137,9 @@ public class JacksonJsonProcessor implements JsonProcessor {
             if (parser.hasToken(JsonToken.VALUE_STRING)) {
                 return JsonRpcRequest.Id.valueOf(parser.getText());
             }
+            if (parser.hasToken(JsonToken.VALUE_NUMBER_INT)) {
+                return JsonRpcRequest.Id.valueOf(parser.getIntValue());
+            }
             return (JsonRpcRequest.Id) context.handleUnexpectedToken(JsonRpcRequest.Id.class, parser);
         }
 
@@ -154,8 +157,12 @@ public class JacksonJsonProcessor implements JsonProcessor {
 
         @Override
         public void serialize(JsonRpcResponse.Id id, JsonGenerator generator, SerializerProvider provider) throws IOException {
-            id.map(value -> {
-                        generator.writeString(value);
+            id.map(stringId -> {
+                        generator.writeString(stringId);
+                        return null;
+                    },
+                    numberId -> {
+                        generator.writeNumber(numberId);
                         return null;
                     },
                     () -> {

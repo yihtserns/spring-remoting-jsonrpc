@@ -49,7 +49,8 @@ public class JsonRpcResponse {
     @Nullable
     static JsonRpcResponse success(Object result, JsonRpcRequest<?> request) {
         return request.getId().map(
-                id -> new JsonRpcResponse(Id.valueOf(id), result),
+                stringId -> new JsonRpcResponse(Id.valueOf(stringId), result),
+                numberId -> new JsonRpcResponse(Id.valueOf(numberId), result),
                 () -> new JsonRpcResponse(Id.nullValue(), result),
                 () -> null);
     }
@@ -66,7 +67,8 @@ public class JsonRpcResponse {
             return new JsonRpcResponse(Id.nullValue(), error);
         }
         return request.getId().map(
-                id -> new JsonRpcResponse(Id.valueOf(id), error),
+                stringId -> new JsonRpcResponse(Id.valueOf(stringId), error),
+                numberId -> new JsonRpcResponse(Id.valueOf(numberId), error),
                 () -> new JsonRpcResponse(Id.nullValue(), error),
                 () -> {
                     if (error.alwaysRespond) {
@@ -80,19 +82,26 @@ public class JsonRpcResponse {
 
     public static class Id {
 
-        private final String value;
+        private final Object value;
 
-        private Id(String value) {
+        private Id(Object value) {
             this.value = value;
         }
 
-        public <T, E extends Exception> T map(ThrowableFunction<String, T, E> valueMapper,
+        public <T, E extends Exception> T map(ThrowableFunction<String, T, E> stringValueMapper,
+                                              ThrowableFunction<Integer, T, E> numberValueMapper,
                                               ThrowableSupplier<T, E> nullValueMapper) throws E {
 
             if (value == null) {
                 return nullValueMapper.get();
             }
-            return valueMapper.apply(value);
+            if (value instanceof String) {
+                return stringValueMapper.apply((String) value);
+            }
+            if (value instanceof Integer) {
+                return numberValueMapper.apply((Integer) value);
+            }
+            throw new UnsupportedOperationException("Unhandled value type: " + value);
         }
 
         /**
@@ -102,6 +111,10 @@ public class JsonRpcResponse {
             if (value == null) {
                 throw new IllegalArgumentException("'value' cannot be null!");
             }
+            return new Id(value);
+        }
+
+        public static Id valueOf(int value) {
             return new Id(value);
         }
 
