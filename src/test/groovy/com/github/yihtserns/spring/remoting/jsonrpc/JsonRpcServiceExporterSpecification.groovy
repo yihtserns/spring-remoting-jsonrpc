@@ -510,7 +510,11 @@ class JsonRpcServiceExporterSpecification extends Specification {
                 id     : request.id,
                 error  : [
                         code   : errorCode,
-                        message: "Custom Application Error"
+                        message: "Custom Application Error",
+                        data   : [
+                                data1: "val1",
+                                data2: "val2"
+                        ]
                 ]
         ]
 

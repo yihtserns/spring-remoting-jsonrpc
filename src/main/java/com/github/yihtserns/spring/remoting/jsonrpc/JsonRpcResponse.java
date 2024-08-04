@@ -131,6 +131,7 @@ public class JsonRpcResponse {
         @Getter
         private final String message;
         @Nullable
+        @Getter
         private final Object data;
 
         private boolean alwaysRespond = false;
@@ -151,15 +152,15 @@ public class JsonRpcResponse {
         }
 
         public static Error methodNotFound() {
-            return new Error(-32601, "Method not found", false);
+            return new Error(-32601, "Method not found");
         }
 
         public static Error invalidParams() {
-            return new Error(-32602, "Invalid params", false);
+            return new Error(-32602, "Invalid params");
         }
 
         public static Error internalError() {
-            return new Error(-32603, "Internal error", false);
+            return new Error(-32603, "Internal error");
         }
 
         public static Error invalidRequest() {
